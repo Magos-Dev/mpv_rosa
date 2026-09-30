@@ -43,6 +43,7 @@ async function findUserByEmail(email) {
 
 for (const user of users) {
   const existing = await findUserByEmail(user.email);
+  let userId;
 
   if (existing) {
     const { error } = await supabase.auth.admin.updateUserById(existing.id, {
@@ -51,33 +52,34 @@ for (const user of users) {
       user_metadata: { name: user.name },
     });
     if (error) throw error;
-
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({ role: user.role, name: user.name, active: true })
-      .eq("id", existing.id);
-    if (profileError) throw profileError;
-
-    console.log(`✔ atualizado: ${user.email} (${user.role})`);
-    continue;
+    userId = existing.id;
+  } else {
+    const { data: created, error } = await supabase.auth.admin.createUser({
+      email: user.email,
+      password,
+      email_confirm: true,
+      app_metadata: { role: user.role },
+      user_metadata: { name: user.name },
+    });
+    if (error) throw error;
+    userId = created.user.id;
   }
-
-  const { data: created, error } = await supabase.auth.admin.createUser({
-    email: user.email,
-    password,
-    email_confirm: true,
-    app_metadata: { role: user.role },
-    user_metadata: { name: user.name },
-  });
-  if (error) throw error;
 
   // O Auth grava app_metadata depois do INSERT, então o trigger cria o
   // profile com o padrão seguro (inativo). Define o papel explicitamente.
   const { error: profileError } = await supabase
     .from("profiles")
     .update({ role: user.role, name: user.name, active: true })
-    .eq("id", created.user.id);
+    .eq("id", userId);
   if (profileError) throw profileError;
 
-  console.log(`✔ criado: ${user.email} (${user.role})`);
+  // Motoboy precisa também do cadastro em couriers (Etapa 5)
+  if (user.role === "courier") {
+    const { error: courierError } = await supabase
+      .from("couriers")
+      .upsert({ user_id: userId, name: user.name, active: true }, { onConflict: "user_id" });
+    if (courierError) throw courierError;
+  }
+
+  console.log(`✔ ${existing ? "atualizado" : "criado"}: ${user.email} (${user.role})`);
 }

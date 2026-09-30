@@ -1,4 +1,4 @@
-import { ArrowLeft, ExternalLink, MapPin, MessageCircle, Phone } from "lucide-react";
+import { ArrowLeft, Bike, ExternalLink, MapPin, MessageCircle, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatBRL } from "@/lib/format";
 import { getAdminOrder } from "@/lib/orders/admin-queries";
 import {
+  DELIVERY_STATUS_LABELS,
   isFinal,
   ORDER_STATUS_LABELS,
   ORDER_TYPE_LABELS,
@@ -81,6 +82,7 @@ export default async function AdminOrderPage({ params }: PageProps<"/admin/pedid
           orderNumber={order.order_number}
           orderType={order.order_type}
           status={order.status}
+          delivery={order.delivery}
           variant="full"
         />
       )}
@@ -219,6 +221,51 @@ export default async function AdminOrderPage({ params }: PageProps<"/admin/pedid
               </Button>
             </CardContent>
           </Card>
+
+          {order.delivery && order.delivery.status !== "cancelled" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Bike className="size-4" aria-hidden />
+                  Motoboy
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-2 text-sm">
+                <p className="font-medium">{order.delivery.courier_name ?? "Aguardando aceite"}</p>
+                <p className="text-muted-foreground">{DELIVERY_STATUS_LABELS[order.delivery.status]}</p>
+                {order.delivery.courier_phone && (
+                  <Button variant="outline" size="sm" className="self-start" asChild>
+                    <a href={`tel:+55${order.delivery.courier_phone}`}>
+                      <Phone aria-hidden />
+                      Ligar para o motoboy
+                    </a>
+                  </Button>
+                )}
+                <dl className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                  <dt>Chamado</dt>
+                  <dd>{time.format(new Date(order.delivery.offered_at))}</dd>
+                  {order.delivery.accepted_at && (
+                    <>
+                      <dt>Aceito</dt>
+                      <dd>{time.format(new Date(order.delivery.accepted_at))}</dd>
+                    </>
+                  )}
+                  {order.delivery.picked_up_at && (
+                    <>
+                      <dt>Retirado</dt>
+                      <dd>{time.format(new Date(order.delivery.picked_up_at))}</dd>
+                    </>
+                  )}
+                  {order.delivery.delivered_at && (
+                    <>
+                      <dt>Entregue</dt>
+                      <dd>{time.format(new Date(order.delivery.delivered_at))}</dd>
+                    </>
+                  )}
+                </dl>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>

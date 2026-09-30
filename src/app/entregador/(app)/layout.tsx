@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { CourierNav } from "@/components/courier/courier-nav";
 import { Brand } from "@/components/layout/brand";
 import { UserMenu } from "@/components/layout/user-menu";
 import { COURIER_ROLES, LOGIN_PATHS, ROLE_LABELS } from "@/lib/auth/roles";
@@ -29,7 +30,8 @@ export default async function CourierLayout({ children }: LayoutProps<"/entregad
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6">{children}</main>
+      <main className="mx-auto w-full max-w-lg flex-1 px-4 pt-6 pb-24">{children}</main>
+      <CourierNav />
     </div>
   );
 }

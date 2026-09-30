@@ -287,6 +287,41 @@ export type Database = {
         };
         Relationships: [];
       };
+      couriers: TableDef<
+        {
+          id: string;
+          user_id: string;
+          name: string;
+          phone: string | null;
+          vehicle_type: string | null;
+          plate: string | null;
+          status: Database["public"]["Enums"]["courier_status"];
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        },
+        "user_id" | "name",
+        [FK<"couriers_user_id_fkey", "user_id", "profiles">]
+      >;
+      deliveries: TableDef<
+        {
+          id: string;
+          order_id: string;
+          courier_id: string | null;
+          status: Database["public"]["Enums"]["delivery_status"];
+          offered_at: string;
+          accepted_at: string | null;
+          picked_up_at: string | null;
+          delivered_at: string | null;
+          cancelled_at: string | null;
+          created_at: string;
+        },
+        "order_id",
+        [
+          FK<"deliveries_order_id_fkey", "order_id", "orders">,
+          FK<"deliveries_courier_id_fkey", "courier_id", "couriers">,
+        ]
+      >;
       customers: TableDef<
         {
           id: string;
@@ -398,6 +433,18 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_delivery: { Args: { p_delivery_id: string }; Returns: undefined };
+      cancel_dispatch: { Args: { p_order_id: string }; Returns: undefined };
+      complete_delivery: { Args: { p_delivery_id: string }; Returns: undefined };
+      current_courier_id: { Args: never; Returns: string };
+      dispatch_delivery: { Args: { p_order_id: string }; Returns: Json };
+      get_courier_history: { Args: never; Returns: Json };
+      get_courier_home: { Args: never; Returns: Json };
+      pickup_delivery: { Args: { p_delivery_id: string }; Returns: undefined };
+      set_courier_status: {
+        Args: { p_status: Database["public"]["Enums"]["courier_status"] };
+        Returns: undefined;
+      };
       change_order_status: {
         Args: {
           p_order_id: string;
@@ -426,12 +473,15 @@ export type Database = {
       };
     };
     Enums: {
+      courier_status: "available" | "busy" | "offline";
+      delivery_status: "offered" | "accepted" | "picked_up" | "delivered" | "cancelled";
       order_status:
         | "new"
         | "confirmed"
         | "preparing"
         | "ready"
         | "awaiting_courier"
+        | "courier_assigned"
         | "out_for_delivery"
         | "delivered"
         | "ready_for_pickup"

@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { OrderStatus, OrderType, PaymentMethod } from "@/lib/orders/labels";
+import type { DeliveryStatus, OrderStatus, OrderType, PaymentMethod } from "@/lib/orders/labels";
 import type { AddressSnapshot } from "@/lib/orders/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,9 +17,25 @@ export type BoardOrder = {
   customer_name: string;
   neighborhood: string | null;
   item_count: number;
+  delivery: { status: DeliveryStatus; courier_name: string | null } | null;
 };
 
 type CustomerSnapshot = { name: string; phone: string; email: string | null };
+
+type DeliveryRow = {
+  status: DeliveryStatus;
+  offered_at: string;
+  accepted_at: string | null;
+  picked_up_at: string | null;
+  delivered_at: string | null;
+  couriers: { name: string; phone: string | null } | null;
+};
+
+/** O PostgREST devolve objeto (1:1) — normaliza caso venha em lista. */
+function one<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
 
 function fail(context: string, message: string): never {
   console.error(`[orders] ${context}:`, message);
@@ -43,7 +59,7 @@ export async function listBoardOrders(): Promise<BoardOrder[]> {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, order_number, status, order_type, total, payment_method, change_for, created_at, updated_at, customer_snapshot, address_snapshot, order_items(quantity)",
+      "id, order_number, status, order_type, total, payment_method, change_for, created_at, updated_at, customer_snapshot, address_snapshot, order_items(quantity), deliveries(status, couriers(name))",
     )
     .or(
       `status.not.in.(delivered,picked_up,cancelled,refused),updated_at.gte.${startOfTodaySaoPaulo()}`,
@@ -53,7 +69,9 @@ export async function listBoardOrders(): Promise<BoardOrder[]> {
 
   if (error) fail("os pedidos", error.message);
 
-  return data.map((o) => ({
+  return data.map((o) => {
+    const delivery = one(o.deliveries as unknown as Pick<DeliveryRow, "status" | "couriers"> | null);
+    return {
     id: o.id,
     order_number: o.order_number,
     status: o.status,
@@ -66,7 +84,11 @@ export async function listBoardOrders(): Promise<BoardOrder[]> {
     customer_name: (o.customer_snapshot as CustomerSnapshot).name,
     neighborhood: (o.address_snapshot as AddressSnapshot | null)?.neighborhood ?? null,
     item_count: (o.order_items as { quantity: number }[]).reduce((s, i) => s + i.quantity, 0),
-  }));
+    delivery: delivery
+      ? { status: delivery.status, courier_name: one(delivery.couriers)?.name ?? null }
+      : null,
+    };
+  });
 }
 
 export type AdminOrderDetail = {
@@ -96,6 +118,15 @@ export type AdminOrderDetail = {
     notes: string | null;
     options: { id: string; group_name: string; name: string; additional_price: number }[];
   }[];
+  delivery: {
+    status: DeliveryStatus;
+    offered_at: string;
+    accepted_at: string | null;
+    picked_up_at: string | null;
+    delivered_at: string | null;
+    courier_name: string | null;
+    courier_phone: string | null;
+  } | null;
   history: {
     id: string;
     previous_status: OrderStatus | null;
@@ -113,7 +144,8 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
     .select(
       `*, order_items(id, product_name_snapshot, quantity, unit_price, total, notes, sort_order,
          order_item_options(id, group_name_snapshot, option_name_snapshot, additional_price)),
-       order_status_history(id, previous_status, new_status, changed_by_name, reason, created_at)`,
+       order_status_history(id, previous_status, new_status, changed_by_name, reason, created_at),
+       deliveries(status, offered_at, accepted_at, picked_up_at, delivered_at, couriers(name, phone))`,
     )
     .eq("id", id)
     .maybeSingle();
@@ -137,6 +169,8 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
     }[];
   }[];
   const history = data.order_status_history as AdminOrderDetail["history"];
+  const delivery = one(data.deliveries as unknown as DeliveryRow | null);
+  const courier = one(delivery?.couriers);
 
   return {
     id: data.id,
@@ -172,6 +206,17 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
           additional_price: o.additional_price,
         })),
       })),
+    delivery: delivery
+      ? {
+          status: delivery.status,
+          offered_at: delivery.offered_at,
+          accepted_at: delivery.accepted_at,
+          picked_up_at: delivery.picked_up_at,
+          delivered_at: delivery.delivered_at,
+          courier_name: courier?.name ?? null,
+          courier_phone: courier?.phone ?? null,
+        }
+      : null,
     history: [...history].sort((a, b) => a.created_at.localeCompare(b.created_at)),
   };
 }

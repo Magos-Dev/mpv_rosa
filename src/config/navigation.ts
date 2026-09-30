@@ -54,8 +54,8 @@ export const ADMIN_NAVIGATION: NavSection[] = [
     title: "Operação",
     items: [
       { title: "Clientes", href: "/admin/clientes", icon: Users, roles: ALL_STAFF, available: false },
-      { title: "Entregas", href: "/admin/entregas", icon: Truck, roles: ALL_STAFF, available: false },
-      { title: "Motoboys", href: "/admin/motoboys", icon: Bike, roles: ADMIN_ONLY, available: false },
+      { title: "Entregas", href: "/admin/entregas", icon: Truck, roles: ALL_STAFF, available: true },
+      { title: "Motoboys", href: "/admin/motoboys", icon: Bike, roles: ADMIN_ONLY, available: true },
     ],
   },
   {

@@ -89,6 +89,7 @@ export function OrderCard({ order, now }: { order: BoardOrder; now: number }) {
           orderNumber={order.order_number}
           orderType={order.order_type}
           status={order.status}
+          delivery={order.delivery}
         />
       )}
     </article>
