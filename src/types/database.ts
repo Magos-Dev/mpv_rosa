@@ -12,6 +12,189 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          active: boolean;
+          created_at: string;
+          description: string | null;
+          id: string;
+          image_url: string | null;
+          name: string;
+          slug: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          active?: boolean;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          image_url?: string | null;
+          name: string;
+          slug: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          active?: boolean;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          image_url?: string | null;
+          name?: string;
+          slug?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      option_groups: {
+        Row: {
+          created_at: string;
+          id: string;
+          max_choices: number;
+          min_choices: number;
+          name: string;
+          product_id: string;
+          required: boolean;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          max_choices?: number;
+          min_choices?: number;
+          name: string;
+          product_id: string;
+          required?: boolean;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          max_choices?: number;
+          min_choices?: number;
+          name?: string;
+          product_id?: string;
+          required?: boolean;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "option_groups_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      product_options: {
+        Row: {
+          additional_price: number;
+          available: boolean;
+          created_at: string;
+          id: string;
+          name: string;
+          option_group_id: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          additional_price?: number;
+          available?: boolean;
+          created_at?: string;
+          id?: string;
+          name: string;
+          option_group_id: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          additional_price?: number;
+          available?: boolean;
+          created_at?: string;
+          id?: string;
+          name?: string;
+          option_group_id?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "product_options_option_group_id_fkey";
+            columns: ["option_group_id"];
+            isOneToOne: false;
+            referencedRelation: "option_groups";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      products: {
+        Row: {
+          active: boolean;
+          available: boolean;
+          best_seller: boolean;
+          category_id: string;
+          created_at: string;
+          description: string | null;
+          featured: boolean;
+          id: string;
+          image_url: string | null;
+          name: string;
+          price: number;
+          promotional_price: number | null;
+          slug: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          active?: boolean;
+          available?: boolean;
+          best_seller?: boolean;
+          category_id: string;
+          created_at?: string;
+          description?: string | null;
+          featured?: boolean;
+          id?: string;
+          image_url?: string | null;
+          name: string;
+          price: number;
+          promotional_price?: number | null;
+          slug: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          active?: boolean;
+          available?: boolean;
+          best_seller?: boolean;
+          category_id?: string;
+          created_at?: string;
+          description?: string | null;
+          featured?: boolean;
+          id?: string;
+          image_url?: string | null;
+          name?: string;
+          price?: number;
+          promotional_price?: number | null;
+          slug?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           active: boolean;
@@ -98,6 +281,10 @@ export type Database = {
       };
       is_admin: { Args: never; Returns: boolean };
       is_staff: { Args: never; Returns: boolean };
+      save_product_option_groups: {
+        Args: { p_groups: Json; p_product_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       user_role: "admin" | "operator" | "courier";

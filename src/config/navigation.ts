@@ -5,7 +5,6 @@ import {
   Cog,
   Gift,
   LayoutDashboard,
-  ListPlus,
   type LucideIcon,
   Package,
   QrCode,
@@ -46,9 +45,9 @@ export const ADMIN_NAVIGATION: NavSection[] = [
   {
     title: "Cardápio",
     items: [
-      { title: "Categorias", href: "/admin/categorias", icon: Tags, roles: ADMIN_ONLY, available: false },
-      { title: "Produtos", href: "/admin/produtos", icon: Package, roles: ADMIN_ONLY, available: false },
-      { title: "Adicionais", href: "/admin/adicionais", icon: ListPlus, roles: ADMIN_ONLY, available: false },
+      { title: "Categorias", href: "/admin/categorias", icon: Tags, roles: ADMIN_ONLY, available: true },
+      // Adicionais são gerenciados dentro de cada produto
+      { title: "Produtos", href: "/admin/produtos", icon: Package, roles: ADMIN_ONLY, available: true },
     ],
   },
   {
