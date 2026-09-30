@@ -11,7 +11,12 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, renameSync } from "node:fs";
 
-const PUBLIC_VARS = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "NEXT_PUBLIC_SITE_URL"];
+const PUBLIC_VARS = [
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+  "NEXT_PUBLIC_SITE_URL",
+  "NEXT_PUBLIC_VAPID_PUBLIC_KEY",
+];
 const ENV_FILES = [".env", ".env.local", ".env.production", ".env.production.local"];
 const HIDDEN_SUFFIX = ".cf-build-hidden";
 

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { OrderCard } from "@/components/orders/order-card";
+import { PushToggle } from "@/components/push/push-toggle";
 import { Button } from "@/components/ui/button";
 import { useRealtimeOrders } from "@/hooks/use-realtime-orders";
 import type { BoardOrder } from "@/lib/orders/admin-queries";
@@ -92,6 +93,7 @@ export function OrderBoard({ orders, messages }: { orders: BoardOrder[]; message
           {soundOn ? <Bell aria-hidden /> : <BellOff aria-hidden />}
           {soundOn ? "Som ligado" : "Som desligado"}
         </Button>
+        <PushToggle audience="loja" />
       </div>
 
       {/* Celular: abas */}

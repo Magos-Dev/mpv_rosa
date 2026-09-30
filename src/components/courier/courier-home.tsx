@@ -17,6 +17,7 @@ import { useEffect, useRef, useTransition } from "react";
 import { toast } from "sonner";
 
 import { EmptyState } from "@/components/feedback/empty-state";
+import { PushToggle } from "@/components/push/push-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRealtimeRefresh } from "@/hooks/use-realtime-orders";
@@ -126,6 +127,8 @@ export function CourierHome({ data }: { data: HomeData }) {
           </div>
         )}
       </section>
+
+      <PushToggle audience="entregador" className="self-start" />
 
       {data.current ? (
         <CurrentDelivery current={data.current} pending={pending} run={run} />

@@ -1,9 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+
+import { formatBRL } from "@/lib/format";
+import { PAYMENT_LABELS, type OrderStatus } from "@/lib/orders/labels";
+import { sendPush } from "@/lib/push/send";
 
 import { getCurrentProfile } from "@/lib/auth/session";
-import type { OrderStatus } from "@/lib/orders/labels";
 import { createClient } from "@/lib/supabase/server";
 
 type Result<T = undefined> =
@@ -70,6 +74,25 @@ export async function dispatchDelivery(
   const { data, error } = await supabase.rpc("dispatch_delivery", { p_order_id: orderId });
   revalidateOrder(orderId);
   if (error) return fromDb("chamar motoboy", error);
+
+  // Notificação "Nova entrega" para os motoboys disponíveis (7E).
+  // Só bairro, valor e pagamento — sem dados pessoais do cliente (LGPD).
+  after(async () => {
+    const { data: order } = await supabase
+      .from("orders")
+      .select("order_number, total, payment_method, address_snapshot")
+      .eq("id", orderId)
+      .maybeSingle();
+    if (!order) return;
+    const hood = (order.address_snapshot as { neighborhood?: string } | null)?.neighborhood ?? "";
+    await sendPush("available_couriers", {
+      title: "🛵 Nova entrega disponível",
+      body: `Pedido #${order.order_number}${hood ? ` · ${hood}` : ""} · ${formatBRL(order.total)} (${PAYMENT_LABELS[order.payment_method]})`,
+      url: "/entregador",
+      tag: `entrega-${order.order_number}`,
+    });
+  });
+
   return { ok: true, data: data as unknown as { available_couriers: number } };
 }
 

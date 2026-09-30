@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import { CourierNav } from "@/components/courier/courier-nav";
 import { Brand } from "@/components/layout/brand";
@@ -9,7 +9,13 @@ import { getStoreName } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: { template: "%s — Entregador", default: "Entregador" },
+  // App instalável (7E)
+  manifest: "/manifest-entregador.webmanifest",
+  appleWebApp: { capable: true, title: "Entregador", statusBarStyle: "default" },
+  icons: { apple: "/icons/entregador-apple-180.png" },
 };
+
+export const viewport: Viewport = { themeColor: "#cf2c5c" };
 
 export default async function CourierLayout({ children }: LayoutProps<"/entregador">) {
   const profile = await requireRole(COURIER_ROLES, LOGIN_PATHS.courier);

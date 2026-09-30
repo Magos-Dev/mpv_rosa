@@ -15,6 +15,11 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
 | 4 — Operação | Painel de pedidos em tempo real, status, histórico, estatísticas do cliente, dashboard | ✅ |
 | 5 — Entregas | Motoboys, chamada, aceite atômico, app do entregador, entregas | ✅ |
 | 6 — Marketing | Clientes, fidelidade, promoções, cupons, QR Code com origem, exportação LGPD | ✅ |
+| 7A — Publicação | Cloudflare Workers (OpenNext) em `pedidos.rosaerose.afweb.com.br` | ✅ |
+| 7D — Taxa por bairro | Zonas de entrega com taxa e pedido mínimo | ✅ |
+| 7B — WhatsApp | Mensagens prontas (modelos editáveis, registro de envio) | ✅ |
+| 7E — Notificações | Web Push (novo pedido para a loja, nova entrega para motoboys) e apps instaláveis (PWA) | ✅ |
+| 7C — PIX | Pagamento online | adiado |
 
 ## Configuração
 
@@ -31,6 +36,7 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
    - `supabase/migrations/20261004000100_marketing.sql`
    - `supabase/migrations/20261005000100_delivery_zones.sql`
    - `supabase/migrations/20261006000100_whatsapp_messages.sql`
+   - `supabase/migrations/20261007000100_push_subscriptions.sql`
 
    Via CLI: `npx supabase login`, `npx supabase link --project-ref rjqjichlkboharrmdyux`, `npm run db:push`.
    Ou cole cada arquivo no SQL Editor do Dashboard.
@@ -48,8 +54,9 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
 Produção: **https://pedidos.rosaerose.afweb.com.br** (Worker `rosaerose-pedidos`, via OpenNext).
 
 1. `npx wrangler login` (uma vez).
-2. Segredo de runtime (uma vez, ou ao trocar a chave):
+2. Segredos de runtime (uma vez, ou ao trocar a chave):
    `npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY`
+   `npx wrangler secret put VAPID_PRIVATE_KEY` (a chave pública fica em `vars`)
 3. `npm run deploy`
 
 O `npm run deploy` usa `scripts/cf-build.mjs`, que **esconde os arquivos `.env` durante o build**.

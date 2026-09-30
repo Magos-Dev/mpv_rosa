@@ -290,6 +290,19 @@ export type Database = {
         };
         Relationships: [];
       };
+      push_subscriptions: TableDef<
+        {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent: string | null;
+          created_at: string;
+          last_used_at: string | null;
+        },
+        "user_id" | "endpoint" | "p256dh" | "auth"
+      >;
       message_logs: TableDef<
         {
           id: string;
@@ -585,6 +598,10 @@ export type Database = {
         Returns: Json;
       };
       get_promotion_prices: { Args: never; Returns: Json };
+      save_push_subscription: {
+        Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string };
+        Returns: undefined;
+      };
       log_message: {
         Args: { p_order_id: string | null; p_customer_id: string | null; p_template: string };
         Returns: undefined;

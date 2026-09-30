@@ -1,6 +1,11 @@
 "use server";
 
+import { after } from "next/server";
 import { z } from "zod";
+
+import { firstName, formatBRL } from "@/lib/format";
+import { sendPush } from "@/lib/push/send";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 import { checkoutSchema, type CheckoutInput } from "@/lib/orders/schemas";
 import type { CartItemPayload, Quote } from "@/lib/orders/types";
@@ -121,6 +126,26 @@ export async function placeOrder(input: {
   });
   if (error) return fromDb("criar pedido", error);
 
-  const result = data as unknown as { order_number: number; public_token: string };
+  const result = data as unknown as { order_number: number; public_token: string; total: number };
+
+  // Notificação "Novo pedido" para a loja (7E) — enviada depois da resposta,
+  // sem atrasar o cliente. Falhas não afetam o pedido.
+  after(async () => {
+    const admin = createAdminClient();
+    const { data: order } = await admin
+      .from("orders")
+      .select("id, order_type, address_snapshot")
+      .eq("public_token", result.public_token)
+      .maybeSingle();
+    if (!order) return;
+    const hood = (order.address_snapshot as { neighborhood?: string } | null)?.neighborhood;
+    await sendPush("staff", {
+      title: `🛎️ Novo pedido #${result.order_number}`,
+      body: `${firstName(c.name)} · ${formatBRL(result.total)} · ${order.order_type === "delivery" ? `Entrega${hood ? ` (${hood})` : ""}` : "Retirada"}`,
+      url: `/admin/pedidos/${order.id}`,
+      tag: `pedido-${result.order_number}`,
+    });
+  });
+
   return { ok: true, data: result };
 }

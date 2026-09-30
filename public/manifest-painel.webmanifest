@@ -1,0 +1,18 @@
+{
+  "name": "Rosa e Rose — Painel",
+  "short_name": "Painel",
+  "description": "Pedidos, entregas e cardápio da loja.",
+  "id": "/admin/",
+  "start_url": "/admin/pedidos",
+  "scope": "/admin/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#cf2c5c",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/icons/painel-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/painel-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/painel-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
