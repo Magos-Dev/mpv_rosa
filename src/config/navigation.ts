@@ -73,7 +73,7 @@ export const ADMIN_NAVIGATION: NavSection[] = [
     items: [
       { title: "Configurações", href: "/admin/configuracoes", icon: Cog, roles: ADMIN_ONLY, available: true },
       { title: "Taxas de entrega", href: "/admin/taxas-entrega", icon: MapPinned, roles: ADMIN_ONLY, available: true },
-      { title: "Usuários", href: "/admin/usuarios", icon: UserCog, roles: ADMIN_ONLY, available: false },
+      { title: "Usuários", href: "/admin/usuarios", icon: UserCog, roles: ADMIN_ONLY, available: true },
     ],
   },
 ];

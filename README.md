@@ -19,6 +19,7 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
 | 7D — Taxa por bairro | Zonas de entrega com taxa e pedido mínimo | ✅ |
 | 7B — WhatsApp | Mensagens prontas (modelos editáveis, registro de envio) | ✅ |
 | 7E — Notificações | Web Push (novo pedido para a loja, nova entrega para motoboys) e apps instaláveis (PWA) | ✅ |
+| Usuários | Cadastro de Admin/Operador, perfil, ativar/desativar, redefinir senha, "Minha senha" | ✅ |
 | 7C — PIX | Pagamento online | adiado |
 
 ## Configuração

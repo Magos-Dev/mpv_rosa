@@ -1,8 +1,9 @@
 "use client";
 
-import { ChevronDown, LogOut } from "lucide-react";
-import { useRef } from "react";
+import { ChevronDown, KeyRound, LogOut } from "lucide-react";
+import { useRef, useState } from "react";
 
+import { OwnPasswordDialog } from "@/components/users/own-password-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,7 @@ type UserMenuProps = {
 export function UserMenu({ name, email, roleLabel, signOutRedirect }: UserMenuProps) {
   // O form fica fora do portal do menu para não ser desmontado antes do envio
   const signOutForm = useRef<HTMLFormElement>(null);
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   return (
     <>
@@ -54,12 +56,18 @@ export function UserMenu({ name, email, roleLabel, signOutRedirect }: UserMenuPr
             <span className="truncate text-xs font-normal text-muted-foreground">{email}</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => setPasswordOpen(true)}>
+            <KeyRound aria-hidden />
+            Minha senha
+          </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onSelect={() => signOutForm.current?.requestSubmit()}>
             <LogOut aria-hidden />
             Sair
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      {/* Fora do menu: continua aberto depois que o menu fecha */}
+      <OwnPasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
     </>
   );
 }
