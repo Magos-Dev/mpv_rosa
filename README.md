@@ -41,6 +41,22 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
    Todos com a senha definida em `SEED_USERS_PASSWORD`.
 6. `npm run dev` e acesse `/admin/login` ou `/entregador/login`.
 
+## Publicação (Cloudflare Workers)
+
+Produção: **https://pedidos.rosaerose.afweb.com.br** (Worker `rosaerose-pedidos`, via OpenNext).
+
+1. `npx wrangler login` (uma vez).
+2. Segredo de runtime (uma vez, ou ao trocar a chave):
+   `npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY`
+3. `npm run deploy`
+
+O `npm run deploy` usa `scripts/cf-build.mjs`, que **esconde os arquivos `.env` durante o build**.
+Sem isso, o OpenNext embutiria os segredos do `.env.local` no código do Worker. As variáveis
+públicas vêm de `vars` no `wrangler.jsonc`.
+
+No Supabase (Authentication › URL Configuration), use `https://pedidos.rosaerose.afweb.com.br`
+como Site URL.
+
 ## Scripts
 
 | Script | Descrição |
@@ -50,6 +66,7 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
 | `seed:users` | Cria/atualiza usuários de teste (usa service role — só local) |
 | `db:push` | Aplica migrations no projeto vinculado |
 | `db:types` | Regenera `src/types/database.ts` a partir do banco |
+| `cf:build` / `preview` / `deploy` | Build sem segredos, pré-visualização e publicação na Cloudflare |
 
 ## Arquitetura
 

@@ -6,6 +6,8 @@ import { useId, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
+  compressMenuImage,
+  MENU_IMAGE_MAX_BYTES,
   MENU_IMAGES_BUCKET,
   validateMenuImageFile,
   type MenuImageFolder,
@@ -48,11 +50,16 @@ export function ImageUpload({ value, onChange, folder, label = "Foto", className
     setError(null);
     setUploading(true);
     try {
+      const image = await compressMenuImage(file);
+      if (image.size > MENU_IMAGE_MAX_BYTES) {
+        setError("A imagem ficou maior que 5 MB. Escolha uma foto menor.");
+        return;
+      }
       const supabase = createClient();
-      const path = `${folder}/${crypto.randomUUID()}.${EXTENSIONS[file.type]}`;
+      const path = `${folder}/${crypto.randomUUID()}.${EXTENSIONS[image.type]}`;
       const { error: uploadError } = await supabase.storage
         .from(MENU_IMAGES_BUCKET)
-        .upload(path, file, { cacheControl: "31536000", contentType: file.type });
+        .upload(path, image, { cacheControl: "31536000", contentType: image.type });
 
       if (uploadError) {
         console.error("[upload]", uploadError.message);
@@ -88,7 +95,7 @@ export function ImageUpload({ value, onChange, folder, label = "Foto", className
           >
             <ImagePlus className="size-7" aria-hidden />
             Escolher imagem
-            <span className="text-xs">JPG, PNG ou WEBP · até 5 MB</span>
+            <span className="text-xs">JPG, PNG ou WEBP · reduzida automaticamente</span>
           </label>
         )}
 

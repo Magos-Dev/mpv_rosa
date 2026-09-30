@@ -1,0 +1,33 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	// Next.js rodando como Cloudflare Worker via OpenNext (Etapa 7A)
+	"name": "rosaerose-pedidos",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2026-09-30",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	// Reduz o tamanho do Worker (limite do plano gratuito: 3 MB comprimido)
+	"minify": true,
+	// Variáveis PÚBLICAS (as mesmas embutidas no navegador). Segredos: wrangler secret put
+	"vars": {
+		"NEXT_PUBLIC_SUPABASE_URL": "https://rjqjichlkboharrmdyux.supabase.co",
+		"NEXT_PUBLIC_SITE_URL": "https://pedidos.rosaerose.afweb.com.br"
+	},
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// Autorreferência exigida pelo OpenNext (o nome deve ser igual ao do worker)
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "rosaerose-pedidos"
+		}
+	],
+	"routes": [
+		{ "pattern": "pedidos.rosaerose.afweb.com.br", "custom_domain": true }
+	],
+	"observability": {
+		"enabled": true
+	}
+	// Segredos (NÃO ficam neste arquivo): wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+}

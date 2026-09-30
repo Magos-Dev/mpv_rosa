@@ -11,7 +11,10 @@
     "format": "prettier --write .",
     "seed:users": "node --env-file=.env.local scripts/seed-users.mjs",
     "db:push": "supabase db push",
-    "db:types": "supabase gen types typescript --project-id rjqjichlkboharrmdyux --schema public > src/types/database.ts"
+    "db:types": "supabase gen types typescript --project-id rjqjichlkboharrmdyux --schema public > src/types/database.ts",
+    "cf:build": "node scripts/cf-build.mjs",
+    "preview": "node scripts/cf-build.mjs && opennextjs-cloudflare preview",
+    "deploy": "node scripts/cf-build.mjs && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -34,6 +37,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.7",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.6",
@@ -45,6 +49,7 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "supabase": "^2.118.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.145.0"
   }
 }
