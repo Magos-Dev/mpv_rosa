@@ -11,7 +11,7 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
 | --- | --- | --- |
 | 1 — Fundação | Projeto, autenticação, perfis (Admin/Operador/Motoboy), layouts, `settings` | ✅ |
 | 2 — Cardápio | Categorias, produtos, adicionais, imagens, cardápio público (leitura) | ✅ |
-| 3 — Compra | Carrinho, checkout, clientes, pedido | ⏳ |
+| 3 — Compra | Carrinho, checkout, clientes, pedido, acompanhamento, configurações da loja | ✅ |
 | 4 — Operação | Painel de pedidos, status, histórico | ⏳ |
 | 5 — Entregas | Motoboys, chamada, aceite atômico | ⏳ |
 | 6 — Marketing | Fidelidade, promoções, cupons, QR Code | ⏳ |
@@ -24,6 +24,7 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
    - `supabase/migrations/20260929000100_foundation_profiles.sql`
    - `supabase/migrations/20260929000200_foundation_settings.sql`
    - `supabase/migrations/20260930000100_menu_catalog.sql`
+   - `supabase/migrations/20261001000100_orders.sql`
 
    Via CLI: `npx supabase login`, `npx supabase link --project-ref rjqjichlkboharrmdyux`, `npm run db:push`.
    Ou cole cada arquivo no SQL Editor do Dashboard.

@@ -1,11 +1,13 @@
-import { ArrowLeft, Info, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft, UtensilsCrossed } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ProductConfigurator } from "@/components/menu/product-configurator";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { firstParam } from "@/lib/auth/messages";
 import { getPublicProduct } from "@/lib/catalog/queries";
 import { formatBRL } from "@/lib/format";
 
@@ -19,17 +21,8 @@ export async function generateMetadata({
   return { title: product?.name ?? "Produto" };
 }
 
-function choiceLabel(group: { required: boolean; min_choices: number; max_choices: number }) {
-  if (group.required) {
-    return group.min_choices === group.max_choices
-      ? `Obrigatório · escolha ${group.max_choices}`
-      : `Obrigatório · escolha de ${group.min_choices} a ${group.max_choices}`;
-  }
-  return group.max_choices === 1 ? "Opcional · até 1" : `Opcional · até ${group.max_choices}`;
-}
-
-export default async function ProductPage({ params }: PageProps<"/produto/[slug]">) {
-  const { slug } = await params;
+export default async function ProductPage({ params, searchParams }: PageProps<"/produto/[slug]">) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
   if (!SLUG.test(slug)) notFound();
 
   const product = await getPublicProduct(slug);
@@ -80,38 +73,7 @@ export default async function ProductPage({ params }: PageProps<"/produto/[slug]
         </div>
       </header>
 
-      {product.option_groups.map((group) => (
-        <section key={group.id} className="flex flex-col gap-2">
-          <div className="flex items-baseline justify-between gap-2 rounded-lg bg-muted/60 px-3 py-2">
-            <h2 className="font-medium">{group.name}</h2>
-            <span className="text-xs text-muted-foreground">{choiceLabel(group)}</span>
-          </div>
-          <ul className="flex flex-col divide-y">
-            {group.options.map((option) => (
-              <li
-                key={option.id}
-                className="flex items-center justify-between gap-2 px-3 py-2.5 text-sm"
-              >
-                <span className={option.available ? undefined : "text-muted-foreground line-through"}>
-                  {option.name}
-                </span>
-                <span className="text-muted-foreground">
-                  {option.available
-                    ? option.additional_price > 0
-                      ? `+ ${formatBRL(option.additional_price)}`
-                      : "Grátis"
-                    : "Indisponível"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
-
-      <p className="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm text-muted-foreground">
-        <Info className="size-4 shrink-0" aria-hidden />
-        Os pedidos online estarão disponíveis em breve.
-      </p>
+      <ProductConfigurator product={product} editKey={firstParam(query.editar)} />
     </article>
   );
 }

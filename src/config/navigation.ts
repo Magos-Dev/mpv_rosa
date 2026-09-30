@@ -70,7 +70,7 @@ export const ADMIN_NAVIGATION: NavSection[] = [
   {
     title: "Sistema",
     items: [
-      { title: "Configurações", href: "/admin/configuracoes", icon: Cog, roles: ADMIN_ONLY, available: false },
+      { title: "Configurações", href: "/admin/configuracoes", icon: Cog, roles: ADMIN_ONLY, available: true },
       { title: "Usuários", href: "/admin/usuarios", icon: UserCog, roles: ADMIN_ONLY, available: false },
     ],
   },

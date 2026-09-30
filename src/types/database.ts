@@ -1,6 +1,14 @@
 // Tipos do banco no formato gerado pelo Supabase CLI.
 // Regenerar com: npm run db:types  (sobrescreve este arquivo)
 
+/** Formato compacto de tabela (Insert: obrigatórios + opcionais; Update: tudo opcional). */
+type TableDef<Row, Required extends keyof Row> = {
+  Row: Row;
+  Insert: Pick<Row, Required> & Partial<Omit<Row, Required>>;
+  Update: Partial<Row>;
+  Relationships: [];
+};
+
 export type Json =
   | string
   | number
@@ -270,23 +278,143 @@ export type Database = {
         };
         Relationships: [];
       };
+      customers: TableDef<
+        {
+          id: string;
+          name: string;
+          phone: string;
+          email: string | null;
+          marketing_opt_in: boolean;
+          marketing_opt_in_at: string | null;
+          total_orders: number;
+          total_spent: number;
+          first_order_at: string | null;
+          last_order_at: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        "name" | "phone"
+      >;
+      customer_addresses: TableDef<
+        {
+          id: string;
+          customer_id: string;
+          zip_code: string | null;
+          street: string;
+          number: string;
+          complement: string | null;
+          neighborhood: string;
+          city: string;
+          state: string | null;
+          reference: string | null;
+          is_default: boolean;
+          created_at: string;
+        },
+        "customer_id" | "street" | "number" | "neighborhood" | "city"
+      >;
+      orders: TableDef<
+        {
+          id: string;
+          order_number: number;
+          public_token: string;
+          customer_id: string;
+          customer_snapshot: Json;
+          order_type: Database["public"]["Enums"]["order_type"];
+          status: Database["public"]["Enums"]["order_status"];
+          subtotal: number;
+          discount: number;
+          delivery_fee: number;
+          total: number;
+          payment_method: Database["public"]["Enums"]["payment_method"];
+          change_for: number | null;
+          coupon_id: string | null;
+          address_snapshot: Json | null;
+          customer_notes: string | null;
+          source: string | null;
+          created_at: string;
+          updated_at: string;
+          confirmed_at: string | null;
+          ready_at: string | null;
+          delivered_at: string | null;
+          cancelled_at: string | null;
+        },
+        "customer_id" | "customer_snapshot" | "order_type" | "subtotal" | "total" | "payment_method"
+      >;
+      order_items: TableDef<
+        {
+          id: string;
+          order_id: string;
+          product_id: string | null;
+          product_name_snapshot: string;
+          quantity: number;
+          unit_price: number;
+          total: number;
+          notes: string | null;
+          sort_order: number;
+        },
+        "order_id" | "product_name_snapshot" | "quantity" | "unit_price" | "total"
+      >;
+      order_item_options: TableDef<
+        {
+          id: string;
+          order_item_id: string;
+          option_id: string | null;
+          group_name_snapshot: string;
+          option_name_snapshot: string;
+          additional_price: number;
+          quantity: number;
+        },
+        "order_item_id" | "group_name_snapshot" | "option_name_snapshot" | "additional_price"
+      >;
+      order_status_history: TableDef<
+        {
+          id: string;
+          order_id: string;
+          previous_status: Database["public"]["Enums"]["order_status"] | null;
+          new_status: Database["public"]["Enums"]["order_status"];
+          changed_by: string | null;
+          created_at: string;
+        },
+        "order_id" | "new_status"
+      >;
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      create_order: { Args: { p_payload: Json }; Returns: Json };
       current_user_role: {
         Args: never;
         Returns: Database["public"]["Enums"]["user_role"];
       };
+      get_order_by_token: { Args: { p_token: string }; Returns: Json };
       is_admin: { Args: never; Returns: boolean };
       is_staff: { Args: never; Returns: boolean };
+      quote_order: {
+        Args: { p_items: Json; p_order_type: Database["public"]["Enums"]["order_type"] };
+        Returns: Json;
+      };
       save_product_option_groups: {
         Args: { p_groups: Json; p_product_id: string };
         Returns: undefined;
       };
     };
     Enums: {
+      order_status:
+        | "new"
+        | "confirmed"
+        | "preparing"
+        | "ready"
+        | "awaiting_courier"
+        | "out_for_delivery"
+        | "delivered"
+        | "ready_for_pickup"
+        | "picked_up"
+        | "cancelled"
+        | "refused";
+      order_type: "delivery" | "pickup";
+      payment_method: "pix" | "cash" | "card_on_delivery";
       user_role: "admin" | "operator" | "courier";
     };
     CompositeTypes: {

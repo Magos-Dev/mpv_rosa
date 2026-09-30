@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { Brand } from "@/components/layout/brand";
+import { CartBar, CartButton, SourceCapture } from "@/components/menu/cart-widgets";
 import { getStoreName } from "@/lib/settings";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -9,14 +11,16 @@ export default async function PublicLayout({ children }: { children: React.React
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="border-b bg-background">
-        <div className="mx-auto flex h-16 w-full max-w-5xl items-center px-4">
-          <Link href="/" aria-label="Página inicial">
+        <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4">
+          <Link href="/cardapio" aria-label="Cardápio">
             <Brand name={storeName} />
           </Link>
+          <CartButton />
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>
-      <footer className="border-t">
+      {/* pb extra: espaço para as barras fixas do carrinho */}
+      <footer className="border-t pb-20">
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-sm text-muted-foreground">
           <span>
             © {new Date().getFullYear()} {storeName}
@@ -26,6 +30,10 @@ export default async function PublicLayout({ children }: { children: React.React
           </Link>
         </div>
       </footer>
+      <CartBar />
+      <Suspense>
+        <SourceCapture />
+      </Suspense>
     </div>
   );
 }
