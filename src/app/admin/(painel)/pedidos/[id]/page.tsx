@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { OrderLiveRefresh } from "@/components/orders/order-live-refresh";
+import { RewardAlert } from "@/components/orders/reward-alert";
 import { StatusActions } from "@/components/orders/status-actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -76,6 +77,8 @@ export default async function AdminOrderPage({ params }: PageProps<"/admin/pedid
         </Alert>
       )}
 
+      {order.reward && <RewardAlert reward={order.reward} orderId={order.id} />}
+
       {!isFinal(order.status) && (
         <StatusActions
           orderId={order.id}
@@ -127,14 +130,22 @@ export default async function AdminOrderPage({ params }: PageProps<"/admin/pedid
               </div>
               {order.discount > 0 && (
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Desconto</dt>
+                  <dt className="text-muted-foreground">
+                    Desconto{order.coupon_code ? ` (cupom ${order.coupon_code})` : ""}
+                  </dt>
                   <dd>− {formatBRL(order.discount)}</dd>
                 </div>
               )}
               {order.order_type === "delivery" && (
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Taxa de entrega</dt>
-                  <dd>{formatBRL(order.delivery_fee)}</dd>
+                  <dd>
+                    {order.delivery_fee > 0
+                      ? formatBRL(order.delivery_fee)
+                      : order.coupon_code
+                        ? `Grátis (cupom ${order.coupon_code})`
+                        : "Grátis"}
+                  </dd>
                 </div>
               )}
               <div className="flex justify-between text-base font-semibold">
@@ -159,7 +170,12 @@ export default async function AdminOrderPage({ params }: PageProps<"/admin/pedid
             </CardHeader>
             <CardContent className="flex flex-col gap-3 text-sm">
               <div>
-                <p className="font-medium">{order.customer.name}</p>
+                <Link
+                  href={`/admin/clientes/${order.customer.id}`}
+                  className="font-medium underline-offset-4 hover:underline"
+                >
+                  {order.customer.name}
+                </Link>
                 <p className="text-muted-foreground">{formatPhone(phone)}</p>
                 {order.customer.email && <p className="text-muted-foreground">{order.customer.email}</p>}
               </div>

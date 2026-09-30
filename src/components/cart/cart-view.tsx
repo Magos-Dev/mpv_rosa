@@ -165,8 +165,8 @@ export function CartView({ accepting, deliveryFee, minimumOrder }: CartViewProps
           <dd>{formatBRL(subtotal + deliveryFee)}</dd>
         </div>
         <p className="text-xs text-muted-foreground">
-          Na retirada no local não há taxa de entrega. Cupons de desconto estarão disponíveis em
-          breve.
+          Na retirada no local não há taxa de entrega. Tem cupom de desconto? Aplique na próxima
+          etapa.
         </p>
       </dl>
 

@@ -14,7 +14,7 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
 | 3 — Compra | Carrinho, checkout, clientes, pedido, acompanhamento, configurações da loja | ✅ |
 | 4 — Operação | Painel de pedidos em tempo real, status, histórico, estatísticas do cliente, dashboard | ✅ |
 | 5 — Entregas | Motoboys, chamada, aceite atômico, app do entregador, entregas | ✅ |
-| 6 — Marketing | Fidelidade, promoções, cupons, QR Code | ⏳ |
+| 6 — Marketing | Clientes, fidelidade, promoções, cupons, QR Code com origem, exportação LGPD | ✅ |
 
 ## Configuração
 
@@ -28,6 +28,7 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
    - `supabase/migrations/20261002000100_order_operations.sql`
    - `supabase/migrations/20261003000100_order_status_courier.sql` (rodar **sozinho**, antes do próximo)
    - `supabase/migrations/20261003000200_deliveries.sql`
+   - `supabase/migrations/20261004000100_marketing.sql`
 
    Via CLI: `npx supabase login`, `npx supabase link --project-ref rjqjichlkboharrmdyux`, `npm run db:push`.
    Ou cole cada arquivo no SQL Editor do Dashboard.

@@ -53,7 +53,7 @@ export const ADMIN_NAVIGATION: NavSection[] = [
   {
     title: "Operação",
     items: [
-      { title: "Clientes", href: "/admin/clientes", icon: Users, roles: ALL_STAFF, available: false },
+      { title: "Clientes", href: "/admin/clientes", icon: Users, roles: ALL_STAFF, available: true },
       { title: "Entregas", href: "/admin/entregas", icon: Truck, roles: ALL_STAFF, available: true },
       { title: "Motoboys", href: "/admin/motoboys", icon: Bike, roles: ADMIN_ONLY, available: true },
     ],
@@ -61,10 +61,10 @@ export const ADMIN_NAVIGATION: NavSection[] = [
   {
     title: "Marketing",
     items: [
-      { title: "Promoções", href: "/admin/promocoes", icon: BadgePercent, roles: ADMIN_ONLY, available: false },
-      { title: "Cupons", href: "/admin/cupons", icon: Ticket, roles: ADMIN_ONLY, available: false },
-      { title: "Fidelidade", href: "/admin/fidelidade", icon: Gift, roles: ADMIN_ONLY, available: false },
-      { title: "QR Code", href: "/admin/qrcode", icon: QrCode, roles: ADMIN_ONLY, available: false },
+      { title: "Promoções", href: "/admin/promocoes", icon: BadgePercent, roles: ADMIN_ONLY, available: true },
+      { title: "Cupons", href: "/admin/cupons", icon: Ticket, roles: ADMIN_ONLY, available: true },
+      { title: "Fidelidade", href: "/admin/fidelidade", icon: Gift, roles: ADMIN_ONLY, available: true },
+      { title: "QR Code", href: "/admin/qrcode", icon: QrCode, roles: ADMIN_ONLY, available: true },
     ],
   },
   {

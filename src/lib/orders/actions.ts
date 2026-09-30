@@ -30,26 +30,43 @@ function fromDb(context: string, error: { code?: string; message: string }) {
 }
 
 /** Preços oficiais do carrinho, calculados no banco. */
+const couponSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .max(30)
+  .regex(/^[A-Z0-9_-]*$/, "Cupom inválido.")
+  .nullable()
+  .optional()
+  .transform((v) => (v ? v : null));
+
 export async function quoteCart(
   items: CartItemPayload[],
   orderType: "delivery" | "pickup",
+  couponCode?: string | null,
 ): Promise<Result<Quote>> {
   const parsed = itemsSchema.safeParse(items);
   if (!parsed.success) return { ok: false, error: "Carrinho inválido. Atualize a página." };
+  const coupon = couponSchema.safeParse(couponCode);
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("quote_order", {
     p_items: parsed.data,
     p_order_type: orderType === "pickup" ? "pickup" : "delivery",
+    p_coupon_code: coupon.success ? (coupon.data ?? undefined) : undefined,
   });
   if (error) return fromDb("cotar carrinho", error);
-  return { ok: true, data: data as unknown as Quote };
+  const quote = data as unknown as Quote;
+  // Formato inválido nem chega ao banco: cota sem cupom e informa o erro
+  if (!coupon.success) quote.coupon_error = "Cupom inválido.";
+  return { ok: true, data: quote };
 }
 
 export async function placeOrder(input: {
   checkout: CheckoutInput;
   items: CartItemPayload[];
   source: string | null;
+  couponCode?: string | null;
   /** Campo invisível: bots costumam preencher. */
   website: string;
 }): Promise<Result<{ order_number: number; public_token: string }>> {
@@ -67,6 +84,8 @@ export async function placeOrder(input: {
 
   const items = itemsSchema.safeParse(input.items);
   if (!items.success) return { ok: false, error: "Carrinho inválido. Atualize a página." };
+  const coupon = couponSchema.safeParse(input.couponCode);
+  if (!coupon.success) return { ok: false, error: "Cupom inválido." };
 
   const c = checkout.data;
   const supabase = await createClient();
@@ -84,6 +103,7 @@ export async function placeOrder(input: {
       change_for: c.change_for,
       notes: c.notes,
       source: input.source,
+      coupon_code: coupon.data,
       items: items.data,
     },
   });

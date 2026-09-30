@@ -3,6 +3,7 @@
 import { Bike, Clock, Store } from "lucide-react";
 import Link from "next/link";
 
+import { RewardAlert } from "@/components/orders/reward-alert";
 import { StatusActions } from "@/components/orders/status-actions";
 import { Badge } from "@/components/ui/badge";
 import { formatBRL } from "@/lib/format";
@@ -82,6 +83,8 @@ export function OrderCard({ order, now }: { order: BoardOrder; now: number }) {
           </Badge>
         )}
       </Link>
+
+      {order.reward && <RewardAlert reward={order.reward} orderId={order.id} compact />}
 
       {!final && (
         <StatusActions

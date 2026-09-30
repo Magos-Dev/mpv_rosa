@@ -73,6 +73,18 @@ export async function dispatchDelivery(
   return { ok: true, data: data as unknown as { available_couriers: number } };
 }
 
+/** Marca o brinde de fidelidade como entregue ao cliente. */
+export async function redeemLoyaltyReward(rewardId: string, orderId: string): Promise<Result> {
+  if (!(await isStaff())) return DENIED;
+  if (!UUID.test(rewardId) || !UUID.test(orderId)) return { ok: false, error: "Brinde inválido." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("redeem_loyalty_reward", { p_reward_id: rewardId });
+  revalidateOrder(orderId);
+  revalidatePath("/admin/clientes", "layout");
+  return error ? fromDb("resgatar brinde", error) : { ok: true };
+}
+
 /** Cancela a chamada (antes da retirada); o pedido volta a "Pronto". */
 export async function cancelDispatch(orderId: string): Promise<Result> {
   if (!(await isStaff())) return DENIED;

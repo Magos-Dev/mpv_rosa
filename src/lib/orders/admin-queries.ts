@@ -18,6 +18,15 @@ export type BoardOrder = {
   neighborhood: string | null;
   item_count: number;
   delivery: { status: DeliveryStatus; courier_name: string | null } | null;
+  /** Brinde de fidelidade vinculado ao pedido (seção 13). */
+  reward: OrderReward | null;
+};
+
+export type OrderReward = {
+  id: string;
+  status: "available" | "redeemed" | "expired";
+  reward_description: string;
+  redeemed_by_name: string | null;
 };
 
 type CustomerSnapshot = { name: string; phone: string; email: string | null };
@@ -59,7 +68,7 @@ export async function listBoardOrders(): Promise<BoardOrder[]> {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, order_number, status, order_type, total, payment_method, change_for, created_at, updated_at, customer_snapshot, address_snapshot, order_items(quantity), deliveries(status, couriers(name))",
+      "id, order_number, status, order_type, total, payment_method, change_for, created_at, updated_at, customer_snapshot, address_snapshot, order_items(quantity), deliveries(status, couriers(name)), loyalty_rewards(id, status, reward_description, redeemed_by_name)",
     )
     .or(
       `status.not.in.(delivered,picked_up,cancelled,refused),updated_at.gte.${startOfTodaySaoPaulo()}`,
@@ -87,6 +96,7 @@ export async function listBoardOrders(): Promise<BoardOrder[]> {
     delivery: delivery
       ? { status: delivery.status, courier_name: one(delivery.couriers)?.name ?? null }
       : null,
+    reward: one(o.loyalty_rewards as unknown as OrderReward | null),
     };
   });
 }
@@ -107,6 +117,8 @@ export type AdminOrderDetail = {
   created_at: string;
   cancellation_reason: string | null;
   public_token: string;
+  coupon_code: string | null;
+  reward: OrderReward | null;
   customer: CustomerSnapshot & { id: string };
   address: AddressSnapshot | null;
   items: {
@@ -145,7 +157,9 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
       `*, order_items(id, product_name_snapshot, quantity, unit_price, total, notes, sort_order,
          order_item_options(id, group_name_snapshot, option_name_snapshot, additional_price)),
        order_status_history(id, previous_status, new_status, changed_by_name, reason, created_at),
-       deliveries(status, offered_at, accepted_at, picked_up_at, delivered_at, couriers(name, phone))`,
+       deliveries(status, offered_at, accepted_at, picked_up_at, delivered_at, couriers(name, phone)),
+       coupons(code),
+       loyalty_rewards(id, status, reward_description, redeemed_by_name)`,
     )
     .eq("id", id)
     .maybeSingle();
@@ -188,6 +202,8 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
     created_at: data.created_at,
     cancellation_reason: data.cancellation_reason,
     public_token: data.public_token,
+    coupon_code: one(data.coupons as unknown as { code: string } | null)?.code ?? null,
+    reward: one(data.loyalty_rewards as unknown as OrderReward | null),
     customer: { id: data.customer_id, ...(data.customer_snapshot as CustomerSnapshot) },
     address: data.address_snapshot as AddressSnapshot | null,
     items: [...items]

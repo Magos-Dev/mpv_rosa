@@ -27,6 +27,10 @@ export type Quote = {
   total: number;
   minimum_order: number;
   accepting_orders: boolean;
+  /** Cupom aplicado (válido) ou null. */
+  coupon: { code: string; type: "percent" | "fixed" | "free_delivery"; description: string | null } | null;
+  /** Motivo da recusa do cupom informado, se houver. */
+  coupon_error: string | null;
 };
 
 export type AddressSnapshot = {
@@ -52,6 +56,7 @@ export type PublicOrder = {
   total: number;
   payment_method: PaymentMethod;
   change_for: number | null;
+  coupon_code: string | null;
   address: AddressSnapshot | null;
   notes: string | null;
   created_at: string;

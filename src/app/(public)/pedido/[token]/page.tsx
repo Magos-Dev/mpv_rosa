@@ -90,8 +90,16 @@ export default async function OrderTrackingPage({ params }: PageProps<"/pedido/[
             </div>
             {order.discount > 0 && (
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Desconto</dt>
+                <dt className="text-muted-foreground">
+                  Desconto{order.coupon_code ? ` (cupom ${order.coupon_code})` : ""}
+                </dt>
                 <dd>− {formatBRL(order.discount)}</dd>
+              </div>
+            )}
+            {order.coupon_code && order.discount === 0 && (
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Cupom</dt>
+                <dd>{order.coupon_code} · entrega grátis</dd>
               </div>
             )}
             {order.order_type === "delivery" && (

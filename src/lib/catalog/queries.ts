@@ -155,6 +155,32 @@ export type PublicCategory = Pick<Category, "id" | "name" | "slug" | "descriptio
   products: PublicProduct[];
 };
 
+/**
+ * Preços das promoções vigentes (Etapa 6), calculados no banco pela mesma
+ * função usada ao fechar o pedido. Mapa produto → preço promocional.
+ */
+const getPromotionPrices = cache(async (): Promise<Map<string, number>> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_promotion_prices");
+  if (error) {
+    // Sem as promoções o cardápio ainda funciona; o preço final é validado no pedido
+    console.error("[catalog] promoções:", error.message);
+    return new Map();
+  }
+  return new Map((data as { product_id: string; price: number }[]).map((p) => [p.product_id, p.price]));
+});
+
+/** Aplica a promoção vigente como "preço promocional" de exibição. */
+function withPromotion<T extends { id: string; price: number; promotional_price: number | null }>(
+  product: T,
+  prices: Map<string, number>,
+): T {
+  const promo = prices.get(product.id);
+  if (promo === undefined) return product;
+  const current = product.promotional_price ?? product.price;
+  return promo < current ? { ...product, promotional_price: promo } : product;
+}
+
 const PUBLIC_PRODUCT_FIELDS =
   "id, name, slug, description, image_url, price, promotional_price, available, featured, best_seller, sort_order";
 
@@ -169,9 +195,13 @@ export const getPublicMenu = cache(async (): Promise<PublicCategory[]> => {
     .order("name");
 
   if (error) fail("o cardápio", error.message);
+  const prices = await getPromotionPrices();
 
   return data
-    .map((category) => ({ ...category, products: [...category.products].sort(byOrder) }))
+    .map((category) => ({
+      ...category,
+      products: [...category.products].map((p) => withPromotion(p, prices)).sort(byOrder),
+    }))
     .filter((c) => c.products.length > 0);
 });
 
@@ -200,7 +230,8 @@ export const getPublicProduct = cache(async (slug: string): Promise<PublicProduc
   if (error) fail("o produto", error.message);
   if (!data) return null;
 
-  const { category, option_groups, ...product } = data;
+  const { category, option_groups, ...rawProduct } = data;
+  const product = withPromotion(rawProduct, await getPromotionPrices());
   return {
     ...product,
     category: { name: category.name, slug: category.slug },

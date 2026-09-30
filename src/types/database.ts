@@ -322,6 +322,78 @@ export type Database = {
           FK<"deliveries_courier_id_fkey", "courier_id", "couriers">,
         ]
       >;
+      loyalty_rules: TableDef<
+        {
+          id: string;
+          name: string;
+          orders_required: number;
+          reward_type: "product" | "other";
+          reward_product_id: string | null;
+          reward_description: string;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        },
+        "name" | "orders_required" | "reward_description"
+      >;
+      loyalty_rewards: TableDef<
+        {
+          id: string;
+          customer_id: string;
+          loyalty_rule_id: string;
+          order_id: string | null;
+          status: Database["public"]["Enums"]["loyalty_reward_status"];
+          reward_description: string;
+          created_at: string;
+          redeemed_at: string | null;
+          redeemed_by_name: string | null;
+        },
+        "customer_id" | "loyalty_rule_id" | "reward_description",
+        [
+          FK<"loyalty_rewards_order_id_fkey", "order_id", "orders">,
+          FK<"loyalty_rewards_customer_id_fkey", "customer_id", "customers">,
+        ]
+      >;
+      promotions: TableDef<
+        {
+          id: string;
+          name: string;
+          type: Database["public"]["Enums"]["promotion_type"];
+          value: number;
+          product_id: string | null;
+          category_id: string | null;
+          starts_at: string;
+          ends_at: string;
+          daily_start: string | null;
+          daily_end: string | null;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        },
+        "name" | "type" | "value" | "starts_at" | "ends_at",
+        [
+          FK<"promotions_product_id_fkey", "product_id", "products">,
+          FK<"promotions_category_id_fkey", "category_id", "categories">,
+        ]
+      >;
+      coupons: TableDef<
+        {
+          id: string;
+          code: string;
+          description: string | null;
+          type: Database["public"]["Enums"]["coupon_type"];
+          value: number;
+          minimum_order: number;
+          usage_limit: number | null;
+          usage_per_customer: number | null;
+          starts_at: string;
+          expires_at: string | null;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        },
+        "code" | "type"
+      >;
       customers: TableDef<
         {
           id: string;
@@ -330,6 +402,7 @@ export type Database = {
           email: string | null;
           marketing_opt_in: boolean;
           marketing_opt_in_at: string | null;
+          marketing_opt_out_at: string | null;
           total_orders: number;
           total_spent: number;
           first_order_at: string | null;
@@ -384,7 +457,11 @@ export type Database = {
           cancelled_at: string | null;
           cancellation_reason: string | null;
         },
-        "customer_id" | "customer_snapshot" | "order_type" | "subtotal" | "total" | "payment_method"
+        "customer_id" | "customer_snapshot" | "order_type" | "subtotal" | "total" | "payment_method",
+        [
+          FK<"orders_coupon_id_fkey", "coupon_id", "coupons">,
+          FK<"orders_customer_id_fkey", "customer_id", "customers">,
+        ]
       >;
       order_items: TableDef<
         {
@@ -464,15 +541,28 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean };
       is_staff: { Args: never; Returns: boolean };
       quote_order: {
-        Args: { p_items: Json; p_order_type: Database["public"]["Enums"]["order_type"] };
+        Args: {
+          p_items: Json;
+          p_order_type: Database["public"]["Enums"]["order_type"];
+          p_coupon_code?: string;
+        };
         Returns: Json;
       };
+      get_promotion_prices: { Args: never; Returns: Json };
+      get_source_stats: { Args: never; Returns: Json };
+      product_effective_price: { Args: { p_product_id: string }; Returns: number };
+      redeem_loyalty_reward: { Args: { p_reward_id: string }; Returns: undefined };
+      revoke_marketing_consent: { Args: { p_customer_id: string }; Returns: undefined };
+      set_customer_notes: { Args: { p_customer_id: string; p_notes: string }; Returns: undefined };
       save_product_option_groups: {
         Args: { p_groups: Json; p_product_id: string };
         Returns: undefined;
       };
     };
     Enums: {
+      coupon_type: "percent" | "fixed" | "free_delivery";
+      loyalty_reward_status: "available" | "redeemed" | "expired";
+      promotion_type: "percent" | "fixed" | "promotional_price";
       courier_status: "available" | "busy" | "offline";
       delivery_status: "offered" | "accepted" | "picked_up" | "delivered" | "cancelled";
       order_status:

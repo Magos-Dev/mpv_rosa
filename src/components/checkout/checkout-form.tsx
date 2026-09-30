@@ -10,6 +10,7 @@ import {
   QrCode,
   ShoppingBag,
   Store,
+  TicketPercent,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -73,6 +74,8 @@ export function CheckoutForm({ accepting }: { accepting: boolean }) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [cepLoading, setCepLoading] = useState(false);
   const [honeypot, setHoneypot] = useState("");
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
 
   const form = useForm<CheckoutInput, unknown, CheckoutData>({
     resolver: zodResolver(checkoutSchema),
@@ -97,7 +100,12 @@ export function CheckoutForm({ accepting }: { accepting: boolean }) {
     });
   }, [form]);
 
-  const quote = useQuote(lines, orderType === "pickup" ? "pickup" : "delivery", hydrated && !placed);
+  const quote = useQuote(
+    lines,
+    orderType === "pickup" ? "pickup" : "delivery",
+    hydrated && !placed,
+    appliedCoupon,
+  );
 
   async function onCepChange(value: string) {
     const digits = value.replace(/\D/g, "");
@@ -127,6 +135,8 @@ export function CheckoutForm({ accepting }: { accepting: boolean }) {
         items: toPayload(lines),
         source: getSource(),
         website: honeypot,
+        // Só envia o cupom se a cotação o aceitou (o banco valida de novo)
+        couponCode: quote.status === "ready" && quote.quote.coupon ? quote.quote.coupon.code : null,
       });
 
       if (!result.ok) {
@@ -442,14 +452,22 @@ export function CheckoutForm({ accepting }: { accepting: boolean }) {
                   <dt className="text-muted-foreground">Subtotal</dt>
                   <dd>{formatBRL(quote.quote.subtotal)}</dd>
                 </div>
+                {quote.quote.discount > 0 && (
+                  <div className="flex justify-between text-emerald-700">
+                    <dt>Desconto (cupom {quote.quote.coupon?.code})</dt>
+                    <dd>− {formatBRL(quote.quote.discount)}</dd>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Taxa de entrega</dt>
-                  <dd>
+                  <dd className={quote.quote.coupon?.type === "free_delivery" ? "text-emerald-700" : undefined}>
                     {orderType === "pickup"
                       ? "Retirada"
-                      : quote.quote.delivery_fee > 0
-                        ? formatBRL(quote.quote.delivery_fee)
-                        : "Grátis"}
+                      : quote.quote.coupon?.type === "free_delivery"
+                        ? `Grátis (cupom ${quote.quote.coupon.code})`
+                        : quote.quote.delivery_fee > 0
+                          ? formatBRL(quote.quote.delivery_fee)
+                          : "Grátis"}
                   </dd>
                 </div>
                 <div className="flex justify-between text-base font-semibold">
@@ -464,6 +482,60 @@ export function CheckoutForm({ accepting }: { accepting: boolean }) {
               )}
             </>
           )}
+
+          {/* Cupom (seção 15) — validado no servidor a cada alteração */}
+          <div className="flex flex-col gap-2 border-t pt-3">
+            {appliedCoupon && quote.status === "ready" && quote.quote.coupon ? (
+              <div className="flex items-center justify-between gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-emerald-800">
+                <span className="flex items-center gap-2">
+                  <TicketPercent className="size-4" aria-hidden />
+                  Cupom <strong>{quote.quote.coupon.code}</strong> aplicado
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setAppliedCoupon(null);
+                    setCouponInput("");
+                  }}
+                >
+                  Remover
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  aria-label="Cupom de desconto"
+                  placeholder="Cupom de desconto"
+                  className="h-10 uppercase"
+                  value={couponInput}
+                  maxLength={30}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (couponInput.trim()) setAppliedCoupon(couponInput.trim());
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10"
+                  disabled={!couponInput.trim() || quote.status === "loading"}
+                  onClick={() => setAppliedCoupon(couponInput.trim())}
+                >
+                  Aplicar
+                </Button>
+              </div>
+            )}
+            {appliedCoupon && quote.status === "ready" && quote.quote.coupon_error && (
+              <p className="text-sm text-destructive" role="alert">
+                {quote.quote.coupon_error}
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 

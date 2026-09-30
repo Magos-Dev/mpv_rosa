@@ -15,21 +15,31 @@ type Settled = { signature: string } & ({ ok: true; quote: Quote } | { ok: false
 
 /**
  * Busca no servidor os valores oficiais do carrinho (preços atuais,
- * disponibilidade e taxa de entrega). Refaz a cotação quando algo muda.
+ * promoções, disponibilidade, taxa de entrega e cupom). Refaz a cotação
+ * quando algo muda.
  */
-export function useQuote(lines: CartLine[], orderType: "delivery" | "pickup", enabled = true): QuoteState {
+export function useQuote(
+  lines: CartLine[],
+  orderType: "delivery" | "pickup",
+  enabled = true,
+  couponCode: string | null = null,
+): QuoteState {
   const [settled, setSettled] = useState<Settled | null>(null);
-  const signature = JSON.stringify([toPayload(lines), orderType]);
+  const signature = JSON.stringify([toPayload(lines), orderType, couponCode]);
   const active = enabled && lines.length > 0;
 
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
-    const [items, type] = JSON.parse(signature) as [ReturnType<typeof toPayload>, "delivery" | "pickup"];
+    const [items, type, coupon] = JSON.parse(signature) as [
+      ReturnType<typeof toPayload>,
+      "delivery" | "pickup",
+      string | null,
+    ];
 
     const timer = setTimeout(async () => {
       try {
-        const result = await quoteCart(items, type);
+        const result = await quoteCart(items, type, coupon);
         if (cancelled) return;
         setSettled(
           result.ok
