@@ -76,7 +76,7 @@ export function SettingsForm({ settings }: { settings: StoreSettings }) {
             label="Taxa de entrega (R$)"
             htmlFor="fee"
             error={errors.default_delivery_fee?.message}
-            hint="Valor único para entregas. Use 0 para entrega grátis."
+            hint="Usada enquanto não houver bairros ativos em “Taxas de entrega”. Use 0 para grátis."
           >
             <Input id="fee" inputMode="decimal" {...form.register("default_delivery_fee")} />
           </Field>

@@ -15,10 +15,12 @@ import { formatBRL } from "@/lib/format";
 type CartViewProps = {
   accepting: boolean;
   deliveryFee: number;
+  /** Faixa de taxas quando há bairros cadastrados (7D); null = taxa única. */
+  zoneFees: { min: number; max: number } | null;
   minimumOrder: number;
 };
 
-export function CartView({ accepting, deliveryFee, minimumOrder }: CartViewProps) {
+export function CartView({ accepting, deliveryFee, zoneFees, minimumOrder }: CartViewProps) {
   const hydrated = useHydrated();
   const { lines } = useCart();
   const quote = useQuote(lines, "pickup", hydrated);
@@ -156,14 +158,28 @@ export function CartView({ accepting, deliveryFee, minimumOrder }: CartViewProps
             {formatBRL(subtotal)}
           </dd>
         </div>
-        <div className="flex justify-between">
-          <dt className="text-muted-foreground">Taxa de entrega</dt>
-          <dd>{deliveryFee > 0 ? formatBRL(deliveryFee) : "Grátis"}</dd>
-        </div>
-        <div className="flex justify-between border-t pt-2 text-base font-semibold">
-          <dt>Total com entrega</dt>
-          <dd>{formatBRL(subtotal + deliveryFee)}</dd>
-        </div>
+        {zoneFees ? (
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Taxa de entrega</dt>
+            <dd className="text-right">
+              {zoneFees.min === zoneFees.max
+                ? formatBRL(zoneFees.min)
+                : `${formatBRL(zoneFees.min)} a ${formatBRL(zoneFees.max)}`}
+              <span className="block text-xs text-muted-foreground">conforme o bairro</span>
+            </dd>
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Taxa de entrega</dt>
+              <dd>{deliveryFee > 0 ? formatBRL(deliveryFee) : "Grátis"}</dd>
+            </div>
+            <div className="flex justify-between border-t pt-2 text-base font-semibold">
+              <dt>Total com entrega</dt>
+              <dd>{formatBRL(subtotal + deliveryFee)}</dd>
+            </div>
+          </>
+        )}
         <p className="text-xs text-muted-foreground">
           Na retirada no local não há taxa de entrega. Tem cupom de desconto? Aplique na próxima
           etapa.

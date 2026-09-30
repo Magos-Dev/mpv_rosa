@@ -23,23 +23,27 @@ export function useQuote(
   orderType: "delivery" | "pickup",
   enabled = true,
   couponCode: string | null = null,
+  /** Bairro/cidade da entrega (taxa por bairro, 7D). */
+  address: { neighborhood: string; city: string } | null = null,
 ): QuoteState {
   const [settled, setSettled] = useState<Settled | null>(null);
-  const signature = JSON.stringify([toPayload(lines), orderType, couponCode]);
+  const addressKey = orderType === "delivery" && address ? address : null;
+  const signature = JSON.stringify([toPayload(lines), orderType, couponCode, addressKey]);
   const active = enabled && lines.length > 0;
 
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
-    const [items, type, coupon] = JSON.parse(signature) as [
+    const [items, type, coupon, addr] = JSON.parse(signature) as [
       ReturnType<typeof toPayload>,
       "delivery" | "pickup",
       string | null,
+      { neighborhood: string; city: string } | null,
     ];
 
     const timer = setTimeout(async () => {
       try {
-        const result = await quoteCart(items, type, coupon);
+        const result = await quoteCart(items, type, coupon, addr);
         if (cancelled) return;
         setSettled(
           result.ok

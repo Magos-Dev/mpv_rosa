@@ -322,6 +322,21 @@ export type Database = {
           FK<"deliveries_courier_id_fkey", "courier_id", "couriers">,
         ]
       >;
+      delivery_zones: TableDef<
+        {
+          id: string;
+          neighborhood: string;
+          city: string;
+          fee: number;
+          estimated_time: string | null;
+          active: boolean;
+          neighborhood_key: string;
+          city_key: string;
+          created_at: string;
+          updated_at: string;
+        },
+        "neighborhood" | "city" | "fee"
+      >;
       loyalty_rules: TableDef<
         {
           id: string;
@@ -545,6 +560,7 @@ export type Database = {
           p_items: Json;
           p_order_type: Database["public"]["Enums"]["order_type"];
           p_coupon_code?: string;
+          p_address?: Json;
         };
         Returns: Json;
       };

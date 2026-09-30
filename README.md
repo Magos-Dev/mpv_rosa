@@ -29,6 +29,7 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
    - `supabase/migrations/20261003000100_order_status_courier.sql` (rodar **sozinho**, antes do próximo)
    - `supabase/migrations/20261003000200_deliveries.sql`
    - `supabase/migrations/20261004000100_marketing.sql`
+   - `supabase/migrations/20261005000100_delivery_zones.sql`
 
    Via CLI: `npx supabase login`, `npx supabase link --project-ref rjqjichlkboharrmdyux`, `npm run db:push`.
    Ou cole cada arquivo no SQL Editor do Dashboard.

@@ -31,6 +31,18 @@ export type Quote = {
   coupon: { code: string; type: "percent" | "fixed" | "free_delivery"; description: string | null } | null;
   /** Motivo da recusa do cupom informado, se houver. */
   coupon_error: string | null;
+  /** Taxa por bairro (7D): bairro atendido, erro "fora da área" ou taxa pendente (sem bairro). */
+  delivery_zone: { neighborhood: string; city: string; estimated_time: string | null } | null;
+  delivery_error: string | null;
+  delivery_fee_pending: boolean;
+};
+
+export type DeliveryZoneOption = {
+  id: string;
+  neighborhood: string;
+  city: string;
+  fee: number;
+  estimated_time: string | null;
 };
 
 export type AddressSnapshot = {

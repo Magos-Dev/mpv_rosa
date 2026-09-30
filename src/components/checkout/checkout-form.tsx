@@ -41,6 +41,9 @@ import {
   type CheckoutInput,
 } from "@/lib/orders/schemas";
 import { lookupCep } from "@/lib/viacep";
+import { normPlace } from "@/lib/delivery-zones/schema";
+import type { DeliveryZoneOption } from "@/lib/orders/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const EMPTY_ADDRESS: CheckoutInput["address"] = {
   zip_code: "",
@@ -65,7 +68,7 @@ const DEFAULTS: CheckoutInput = {
   marketing_opt_in: false,
 };
 
-export function CheckoutForm({ accepting }: { accepting: boolean }) {
+export function CheckoutForm({ accepting, zones }: { accepting: boolean; zones: DeliveryZoneOption[] }) {
   const router = useRouter();
   const hydrated = useHydrated();
   const { lines } = useCart();
@@ -100,12 +103,30 @@ export function CheckoutForm({ accepting }: { accepting: boolean }) {
     });
   }, [form]);
 
+  // Taxa por bairro (7D): com bairros cadastrados, o bairro é escolhido da lista
+  const zoneMode = zones.length > 0;
+  const [neighborhood, city] = useWatch({ control: form.control, name: ["address.neighborhood", "address.city"] });
+  const [cepZoneWarning, setCepZoneWarning] = useState<string | null>(null);
+  const selectedZone = zoneMode
+    ? zones.find((z) => normPlace(z.neighborhood) === normPlace(neighborhood ?? "") && normPlace(z.city) === normPlace(city ?? ""))
+    : undefined;
+
   const quote = useQuote(
     lines,
     orderType === "pickup" ? "pickup" : "delivery",
     hydrated && !placed,
     appliedCoupon,
+    neighborhood ? { neighborhood, city: city ?? "" } : null,
   );
+
+  function selectZone(zoneId: string) {
+    const zone = zones.find((z) => z.id === zoneId);
+    if (!zone) return;
+    const opts = { shouldValidate: true, shouldDirty: true };
+    form.setValue("address.neighborhood", zone.neighborhood, opts);
+    form.setValue("address.city", zone.city, opts);
+    setCepZoneWarning(null);
+  }
 
   async function onCepChange(value: string) {
     const digits = value.replace(/\D/g, "");
@@ -119,9 +140,27 @@ export function CheckoutForm({ accepting }: { accepting: boolean }) {
     }
     const opts = { shouldValidate: true, shouldDirty: true };
     if (found.street) form.setValue("address.street", found.street, opts);
-    if (found.neighborhood) form.setValue("address.neighborhood", found.neighborhood, opts);
-    if (found.city) form.setValue("address.city", found.city, opts);
     if (found.state) form.setValue("address.state", found.state, opts);
+    if (zoneMode) {
+      // Seleciona o bairro da lista que corresponde ao CEP (sem acento/caixa)
+      const zone = zones.find(
+        (z) => normPlace(z.neighborhood) === normPlace(found.neighborhood) && normPlace(z.city) === normPlace(found.city),
+      );
+      if (zone) {
+        selectZone(zone.id);
+      } else {
+        form.setValue("address.neighborhood", "", opts);
+        form.setValue("address.city", "", opts);
+        setCepZoneWarning(
+          found.neighborhood
+            ? `Ainda não entregamos no bairro ${found.neighborhood}. Escolha um bairro atendido ou retire no local.`
+            : "Não identificamos o bairro deste CEP. Escolha o bairro na lista.",
+        );
+      }
+    } else {
+      if (found.neighborhood) form.setValue("address.neighborhood", found.neighborhood, opts);
+      if (found.city) form.setValue("address.city", found.city, opts);
+    }
     form.setFocus("address.number");
   }
 
@@ -198,7 +237,12 @@ export function CheckoutForm({ accepting }: { accepting: boolean }) {
   const total = quote.status === "ready" ? quote.quote.total : null;
   const belowMinimum =
     quote.status === "ready" && quote.quote.subtotal < quote.quote.minimum_order;
-  const canSubmit = accepting && quote.status === "ready" && !belowMinimum && !submitting;
+  // Entrega: bairro fora da área ou ainda não escolhido impede finalizar
+  const deliveryBlocked =
+    orderType === "delivery" &&
+    quote.status === "ready" &&
+    (Boolean(quote.quote.delivery_error) || quote.quote.delivery_fee_pending);
+  const canSubmit = accepting && quote.status === "ready" && !belowMinimum && !deliveryBlocked && !submitting;
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4 pb-28" noValidate>
@@ -322,22 +366,53 @@ export function CheckoutForm({ accepting }: { accepting: boolean }) {
               >
                 <Input id="complement" placeholder="Apto, bloco…" className="h-11 text-base" {...form.register("address.complement")} />
               </Field>
-              <Field
-                label="Bairro"
-                htmlFor="neighborhood"
-                error={errors.address?.neighborhood?.message}
-                className="sm:col-span-3"
-              >
-                <Input id="neighborhood" className="h-11 text-base" {...form.register("address.neighborhood")} />
-              </Field>
-              <Field
-                label="Cidade"
-                htmlFor="city"
-                error={errors.address?.city?.message}
-                className="sm:col-span-2"
-              >
-                <Input id="city" autoComplete="address-level2" className="h-11 text-base" {...form.register("address.city")} />
-              </Field>
+              {zoneMode ? (
+                <Field
+                  label="Bairro"
+                  error={errors.address?.neighborhood?.message}
+                  hint={selectedZone ? `${selectedZone.city}${selectedZone.estimated_time ? ` · entrega em ${selectedZone.estimated_time}` : ""}` : undefined}
+                  className="sm:col-span-5"
+                >
+                  <Select value={selectedZone?.id ?? ""} onValueChange={selectZone}>
+                    <SelectTrigger className="h-11! w-full text-base" aria-label="Bairro">
+                      <SelectValue placeholder="Escolha o seu bairro" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {zones.map((z) => (
+                        <SelectItem key={z.id} value={z.id}>
+                          {z.neighborhood}
+                          {new Set(zones.map((x) => x.city)).size > 1 && ` (${z.city})`} —{" "}
+                          {z.fee > 0 ? formatBRL(z.fee) : "grátis"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {cepZoneWarning && (
+                    <p className="text-sm text-destructive" role="alert">
+                      {cepZoneWarning}
+                    </p>
+                  )}
+                </Field>
+              ) : (
+                <>
+                  <Field
+                    label="Bairro"
+                    htmlFor="neighborhood"
+                    error={errors.address?.neighborhood?.message}
+                    className="sm:col-span-3"
+                  >
+                    <Input id="neighborhood" className="h-11 text-base" {...form.register("address.neighborhood")} />
+                  </Field>
+                  <Field
+                    label="Cidade"
+                    htmlFor="city"
+                    error={errors.address?.city?.message}
+                    className="sm:col-span-2"
+                  >
+                    <Input id="city" autoComplete="address-level2" className="h-11 text-base" {...form.register("address.city")} />
+                  </Field>
+                </>
+              )}
               <Field
                 label="UF"
                 htmlFor="state"
@@ -463,13 +538,23 @@ export function CheckoutForm({ accepting }: { accepting: boolean }) {
                   <dd className={quote.quote.coupon?.type === "free_delivery" ? "text-emerald-700" : undefined}>
                     {orderType === "pickup"
                       ? "Retirada"
-                      : quote.quote.coupon?.type === "free_delivery"
-                        ? `Grátis (cupom ${quote.quote.coupon.code})`
-                        : quote.quote.delivery_fee > 0
-                          ? formatBRL(quote.quote.delivery_fee)
-                          : "Grátis"}
+                      : quote.quote.delivery_error
+                        ? "—"
+                        : quote.quote.delivery_fee_pending
+                          ? "Escolha o bairro"
+                          : quote.quote.coupon?.type === "free_delivery"
+                            ? `Grátis (cupom ${quote.quote.coupon.code})`
+                            : quote.quote.delivery_fee > 0
+                              ? formatBRL(quote.quote.delivery_fee)
+                              : "Grátis"}
                   </dd>
                 </div>
+                {orderType === "delivery" && quote.quote.delivery_zone?.estimated_time && (
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <dt>Tempo estimado</dt>
+                    <dd>{quote.quote.delivery_zone.estimated_time}</dd>
+                  </div>
+                )}
                 <div className="flex justify-between text-base font-semibold">
                   <dt>Total</dt>
                   <dd>{formatBRL(quote.quote.total)}</dd>
@@ -479,6 +564,12 @@ export function CheckoutForm({ accepting }: { accepting: boolean }) {
                 <p className="text-destructive">
                   O pedido mínimo é de {formatBRL(quote.quote.minimum_order)}.
                 </p>
+              )}
+              {orderType === "delivery" && quote.quote.delivery_error && (
+                <Alert variant="destructive">
+                  <AlertCircle aria-hidden />
+                  <AlertDescription>{quote.quote.delivery_error}</AlertDescription>
+                </Alert>
               )}
             </>
           )}

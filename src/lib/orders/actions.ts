@@ -40,20 +40,32 @@ const couponSchema = z
   .optional()
   .transform((v) => (v ? v : null));
 
+/** Só bairro e cidade importam para a taxa (7D). */
+const quoteAddressSchema = z
+  .object({
+    neighborhood: z.string().trim().max(80),
+    city: z.string().trim().max(80),
+  })
+  .nullable()
+  .optional();
+
 export async function quoteCart(
   items: CartItemPayload[],
   orderType: "delivery" | "pickup",
   couponCode?: string | null,
+  address?: { neighborhood: string; city: string } | null,
 ): Promise<Result<Quote>> {
   const parsed = itemsSchema.safeParse(items);
   if (!parsed.success) return { ok: false, error: "Carrinho inválido. Atualize a página." };
   const coupon = couponSchema.safeParse(couponCode);
+  const addr = quoteAddressSchema.safeParse(address);
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("quote_order", {
     p_items: parsed.data,
     p_order_type: orderType === "pickup" ? "pickup" : "delivery",
     p_coupon_code: coupon.success ? (coupon.data ?? undefined) : undefined,
+    p_address: addr.success && addr.data ? addr.data : undefined,
   });
   if (error) return fromDb("cotar carrinho", error);
   const quote = data as unknown as Quote;
