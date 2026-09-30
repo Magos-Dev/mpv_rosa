@@ -39,7 +39,7 @@ export const ADMIN_NAVIGATION: NavSection[] = [
   {
     items: [
       { title: "Dashboard", href: "/admin", icon: LayoutDashboard, roles: ALL_STAFF, available: true },
-      { title: "Pedidos", href: "/admin/pedidos", icon: ClipboardList, roles: ALL_STAFF, available: false },
+      { title: "Pedidos", href: "/admin/pedidos", icon: ClipboardList, roles: ALL_STAFF, available: true },
     ],
   },
   {

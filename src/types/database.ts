@@ -2,11 +2,20 @@
 // Regenerar com: npm run db:types  (sobrescreve este arquivo)
 
 /** Formato compacto de tabela (Insert: obrigatórios + opcionais; Update: tudo opcional). */
-type TableDef<Row, Required extends keyof Row> = {
+type TableDef<Row, Required extends keyof Row, Rel extends unknown[] = []> = {
   Row: Row;
   Insert: Pick<Row, Required> & Partial<Omit<Row, Required>>;
   Update: Partial<Row>;
-  Relationships: [];
+  Relationships: Rel;
+};
+
+/** Relacionamento N:1 no formato gerado pelo Supabase. */
+type FK<Name extends string, Column extends string, Target extends string> = {
+  foreignKeyName: Name;
+  columns: [Column];
+  isOneToOne: false;
+  referencedRelation: Target;
+  referencedColumns: ["id"];
 };
 
 export type Json =
@@ -338,6 +347,7 @@ export type Database = {
           ready_at: string | null;
           delivered_at: string | null;
           cancelled_at: string | null;
+          cancellation_reason: string | null;
         },
         "customer_id" | "customer_snapshot" | "order_type" | "subtotal" | "total" | "payment_method"
       >;
@@ -353,7 +363,8 @@ export type Database = {
           notes: string | null;
           sort_order: number;
         },
-        "order_id" | "product_name_snapshot" | "quantity" | "unit_price" | "total"
+        "order_id" | "product_name_snapshot" | "quantity" | "unit_price" | "total",
+        [FK<"order_items_order_id_fkey", "order_id", "orders">]
       >;
       order_item_options: TableDef<
         {
@@ -365,7 +376,8 @@ export type Database = {
           additional_price: number;
           quantity: number;
         },
-        "order_item_id" | "group_name_snapshot" | "option_name_snapshot" | "additional_price"
+        "order_item_id" | "group_name_snapshot" | "option_name_snapshot" | "additional_price",
+        [FK<"order_item_options_order_item_id_fkey", "order_item_id", "order_items">]
       >;
       order_status_history: TableDef<
         {
@@ -374,16 +386,29 @@ export type Database = {
           previous_status: Database["public"]["Enums"]["order_status"] | null;
           new_status: Database["public"]["Enums"]["order_status"];
           changed_by: string | null;
+          changed_by_name: string | null;
+          reason: string | null;
           created_at: string;
         },
-        "order_id" | "new_status"
+        "order_id" | "new_status",
+        [FK<"order_status_history_order_id_fkey", "order_id", "orders">]
       >;
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      change_order_status: {
+        Args: {
+          p_order_id: string;
+          p_new_status: Database["public"]["Enums"]["order_status"];
+          p_expected_status?: Database["public"]["Enums"]["order_status"];
+          p_reason?: string;
+        };
+        Returns: Json;
+      };
       create_order: { Args: { p_payload: Json }; Returns: Json };
+      get_dashboard_stats: { Args: never; Returns: Json };
       current_user_role: {
         Args: never;
         Returns: Database["public"]["Enums"]["user_role"];
