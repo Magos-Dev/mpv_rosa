@@ -27,7 +27,7 @@ const EXAMPLE: TemplateVars = {
   motoboy: "Carlos",
   motivo: "cliente desistiu",
   brinde: "Refrigerante grátis",
-  loja: "Rosa e Rose",
+  loja: "Rosa Rose",
   endereco_loja: "Rua Exemplo, 123",
   cardapio: "https://pedidos…/cardapio",
 };

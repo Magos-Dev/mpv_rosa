@@ -14,7 +14,7 @@
 	// Variáveis PÚBLICAS (as mesmas embutidas no navegador). Segredos: wrangler secret put
 	"vars": {
 		"NEXT_PUBLIC_SUPABASE_URL": "https://rjqjichlkboharrmdyux.supabase.co",
-		"NEXT_PUBLIC_SITE_URL": "https://pedidos.rosaerose.afweb.com.br",
+		"NEXT_PUBLIC_SITE_URL": "https://rosarose.afweb.com.br",
 		// Web Push (7E): chave pública VAPID. A privada: wrangler secret put VAPID_PRIVATE_KEY
 		"NEXT_PUBLIC_VAPID_PUBLIC_KEY": "BLVpc6tumuq3v-FFqtCaVM05PKeIwxPbcYj6y7PdMoTMzQLE7sBBZ9x2caHF2pXlKVQzmB1EcjnxT_ibDutgKo8"
 	},
@@ -30,6 +30,8 @@
 		}
 	],
 	"routes": [
+		{ "pattern": "rosarose.afweb.com.br", "custom_domain": true },
+		// Endereço antigo: só redireciona para o atual (src/proxy.ts)
 		{ "pattern": "pedidos.rosaerose.afweb.com.br", "custom_domain": true }
 	],
 	"observability": {

@@ -15,7 +15,7 @@ self.addEventListener("push", (event) => {
 
   const isCourier = typeof data.url === "string" && data.url.startsWith("/entregador");
   event.waitUntil(
-    self.registration.showNotification(data.title || "Rosa e Rose", {
+    self.registration.showNotification(data.title || "Rosa Rose", {
       body: data.body || "",
       icon: isCourier ? "/icons/entregador-192.png" : "/icons/painel-192.png",
       badge: "/icons/badge-96.png",

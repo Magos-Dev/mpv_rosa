@@ -15,7 +15,7 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
 | 4 — Operação | Painel de pedidos em tempo real, status, histórico, estatísticas do cliente, dashboard | ✅ |
 | 5 — Entregas | Motoboys, chamada, aceite atômico, app do entregador, entregas | ✅ |
 | 6 — Marketing | Clientes, fidelidade, promoções, cupons, QR Code com origem, exportação LGPD | ✅ |
-| 7A — Publicação | Cloudflare Workers (OpenNext) em `pedidos.rosaerose.afweb.com.br` | ✅ |
+| 7A — Publicação | Cloudflare Workers (OpenNext) em `rosarose.afweb.com.br` | ✅ |
 | 7D — Taxa por bairro | Zonas de entrega com taxa e pedido mínimo | ✅ |
 | 7B — WhatsApp | Mensagens prontas (modelos editáveis, registro de envio) | ✅ |
 | 7E — Notificações | Web Push (novo pedido para a loja, nova entrega para motoboys) e apps instaláveis (PWA) | ✅ |
@@ -51,7 +51,8 @@ Desenvolvimento por etapas; funcionalidades concluídas só são alteradas com a
 
 ## Publicação (Cloudflare Workers)
 
-Produção: **https://pedidos.rosaerose.afweb.com.br** (Worker `rosaerose-pedidos`, via OpenNext).
+Produção: **https://rosarose.afweb.com.br** (Worker `rosaerose-pedidos`, via OpenNext).
+O endereço antigo `pedidos.rosaerose.afweb.com.br` redireciona (301) para o atual (`src/proxy.ts`).
 
 1. `npx wrangler login` (uma vez).
 2. Segredos de runtime (uma vez, ou ao trocar a chave):
@@ -63,7 +64,7 @@ O `npm run deploy` usa `scripts/cf-build.mjs`, que **esconde os arquivos `.env` 
 Sem isso, o OpenNext embutiria os segredos do `.env.local` no código do Worker. As variáveis
 públicas vêm de `vars` no `wrangler.jsonc`.
 
-No Supabase (Authentication › URL Configuration), use `https://pedidos.rosaerose.afweb.com.br`
+No Supabase (Authentication › URL Configuration), use `https://rosarose.afweb.com.br`
 como Site URL.
 
 ## Scripts

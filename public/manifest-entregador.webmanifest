@@ -1,7 +1,7 @@
 {
-  "name": "Rosa e Rose — Entregador",
+  "name": "Rosa Rose — Entregador",
   "short_name": "Entregador",
-  "description": "Entregas da Rosa e Rose para motoboys.",
+  "description": "Entregas da Rosa Rose para motoboys.",
   "id": "/entregador",
   "start_url": "/entregador",
   "scope": "/entregador",

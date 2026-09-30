@@ -23,7 +23,7 @@ function vapidKeys(): VapidKeys | null {
   const privateKey = process.env.VAPID_PRIVATE_KEY;
   if (!publicKey || !privateKey) return null;
   return {
-    subject: process.env.NEXT_PUBLIC_SITE_URL ?? "https://pedidos.rosaerose.afweb.com.br",
+    subject: process.env.NEXT_PUBLIC_SITE_URL ?? "https://rosarose.afweb.com.br",
     publicKey,
     privateKey,
   };
