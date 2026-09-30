@@ -20,6 +20,15 @@ import {
   PAYMENT_LABELS,
 } from "@/lib/orders/labels";
 import { formatPhone } from "@/lib/orders/schemas";
+import { WhatsAppButton } from "@/components/whatsapp/whatsapp-button";
+import { getMessageContext } from "@/lib/whatsapp/context";
+import {
+  orderVars,
+  renderTemplate,
+  TEMPLATE_LABELS,
+  templatesForOrder,
+  type TemplateKey,
+} from "@/lib/whatsapp/templates";
 
 export const metadata: Metadata = { title: "Pedido" };
 
@@ -38,8 +47,26 @@ const time = new Intl.DateTimeFormat("pt-BR", {
 export default async function AdminOrderPage({ params }: PageProps<"/admin/pedidos/[id]">) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();
-  const order = await getAdminOrder(id);
+  const [order, messageContext] = await Promise.all([getAdminOrder(id), getMessageContext()]);
   if (!order) notFound();
+
+  // Mensagens prontas de WhatsApp disponíveis para este pedido (7B)
+  const vars = orderVars(
+    {
+      customer_name: order.customer.name,
+      order_number: order.order_number,
+      total: order.total,
+      public_token: order.public_token,
+      courier_name: order.delivery?.courier_name,
+      cancellation_reason: order.cancellation_reason,
+      reward_description: order.reward?.reward_description,
+    },
+    messageContext,
+  );
+  const messageOptions = templatesForOrder(order.order_type, order.status, Boolean(order.reward)).map((key) => ({
+    key,
+    text: renderTemplate(messageContext.templates[key], vars),
+  }));
 
   const a = order.address;
   const addressLine = a
@@ -89,6 +116,16 @@ export default async function AdminOrderPage({ params }: PageProps<"/admin/pedid
           variant="full"
         />
       )}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <WhatsAppButton phone={phone} orderId={order.id} options={messageOptions} sent={order.messages} />
+        {order.messages[0] && (
+          <span className="text-xs text-muted-foreground">
+            Último aviso: {TEMPLATE_LABELS[order.messages[0].template as TemplateKey] ?? order.messages[0].template} ·{" "}
+            {order.messages[0].sent_by_name ?? "—"} às {time.format(new Date(order.messages[0].created_at))}
+          </span>
+        )}
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <Card>
@@ -304,6 +341,24 @@ export default async function AdminOrderPage({ params }: PageProps<"/admin/pedid
                   </li>
                 ))}
               </ol>
+              {order.messages.length > 0 && (
+                <div className="mt-4 border-t pt-3">
+                  <p className="mb-2 text-xs font-medium text-muted-foreground uppercase">Avisos pelo WhatsApp</p>
+                  <ul className="flex flex-col gap-1.5 text-sm">
+                    {[...order.messages].reverse().map((m, i) => (
+                      <li key={i} className="flex gap-3">
+                        <time className="w-12 shrink-0 text-muted-foreground" dateTime={m.created_at}>
+                          {time.format(new Date(m.created_at))}
+                        </time>
+                        <span>
+                          {TEMPLATE_LABELS[m.template as TemplateKey] ?? m.template}
+                          <span className="block text-xs text-muted-foreground">{m.sent_by_name ?? "—"}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

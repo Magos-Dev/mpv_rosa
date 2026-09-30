@@ -8,6 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCustomer } from "@/lib/customers/queries";
+import { PromotionMessage } from "@/components/whatsapp/promotion-message";
+import { firstName } from "@/lib/format";
+import { getMessageContext } from "@/lib/whatsapp/context";
+import { renderTemplate } from "@/lib/whatsapp/templates";
 import { formatBRL } from "@/lib/format";
 import { isFinal, ORDER_STATUS_LABELS, ORDER_TYPE_LABELS } from "@/lib/orders/labels";
 import { formatPhone } from "@/lib/orders/schemas";
@@ -36,7 +40,7 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 export default async function CustomerPage({ params }: PageProps<"/admin/clientes/[id]">) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();
-  const c = await getCustomer(id);
+  const [c, messageContext] = await Promise.all([getCustomer(id), getMessageContext()]);
   if (!c) notFound();
 
   const ticket = c.total_orders > 0 ? c.total_spent / c.total_orders : 0;
@@ -204,6 +208,17 @@ export default async function CustomerPage({ params }: PageProps<"/admin/cliente
                     Aceitou receber promoções em{" "}
                     {c.marketing_opt_in_at ? dateTime.format(new Date(c.marketing_opt_in_at)) : "—"}.
                   </p>
+                  <PromotionMessage
+                    customerId={c.id}
+                    phone={c.phone}
+                    lastSentAt={c.last_promotion_at}
+                    initialText={renderTemplate(messageContext.templates.promotion, {
+                      nome: firstName(c.name),
+                      loja: messageContext.storeName,
+                      cardapio: `${messageContext.siteUrl}/cardapio`,
+                      endereco_loja: messageContext.storeAddress,
+                    })}
+                  />
                   <RevokeConsentButton customerId={c.id} />
                 </>
               ) : (

@@ -10,6 +10,9 @@ import { formatBRL } from "@/lib/format";
 import type { BoardOrder } from "@/lib/orders/admin-queries";
 import { isFinal, ORDER_STATUS_LABELS, PAYMENT_LABELS } from "@/lib/orders/labels";
 import { cn } from "@/lib/utils";
+import type { MessageContext } from "@/lib/whatsapp/context";
+import { orderVars, renderTemplate, suggestedTemplate } from "@/lib/whatsapp/templates";
+import { WhatsAppButton, type MessageOption } from "@/components/whatsapp/whatsapp-button";
 
 const time = new Intl.DateTimeFormat("pt-BR", {
   hour: "2-digit",
@@ -24,8 +27,32 @@ function elapsedLabel(minutes: number) {
   return `${h}h${String(minutes % 60).padStart(2, "0")}`;
 }
 
-export function OrderCard({ order, now }: { order: BoardOrder; now: number }) {
+export function OrderCard({ order, now, messages }: { order: BoardOrder; now: number; messages: MessageContext }) {
   const final = isFinal(order.status);
+  // Mensagem de WhatsApp sugerida para o status atual (7B)
+  const suggested = suggestedTemplate(order.status);
+  const messageOptions: MessageOption[] = suggested
+    ? [
+        {
+          key: suggested,
+          text: renderTemplate(
+            messages.templates[suggested],
+            orderVars(
+              {
+                customer_name: order.customer_name,
+                order_number: order.order_number,
+                total: order.total,
+                public_token: order.public_token,
+                courier_name: order.delivery?.courier_name,
+                cancellation_reason: order.cancellation_reason,
+                reward_description: order.reward?.reward_description,
+              },
+              messages,
+            ),
+          ),
+        },
+      ]
+    : [];
   const minutes = Math.max(0, Math.floor((now - new Date(order.created_at).getTime()) / 60_000));
   // Alerta visual de atraso: 20 min amarelo, 40 min vermelho
   const tone = final ? "muted" : minutes >= 40 ? "late" : minutes >= 20 ? "warn" : "ok";
@@ -85,6 +112,14 @@ export function OrderCard({ order, now }: { order: BoardOrder; now: number }) {
       </Link>
 
       {order.reward && <RewardAlert reward={order.reward} orderId={order.id} compact />}
+
+      <WhatsAppButton
+        variant="compact"
+        phone={order.customer_phone}
+        orderId={order.id}
+        options={messageOptions}
+        sent={order.messages}
+      />
 
       {!final && (
         <StatusActions

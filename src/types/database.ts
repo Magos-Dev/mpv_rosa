@@ -256,6 +256,7 @@ export type Database = {
           store_name: string;
           updated_at: string;
           whatsapp: string | null;
+          whatsapp_templates: Json;
         };
         Insert: {
           accepting_orders?: boolean;
@@ -270,6 +271,7 @@ export type Database = {
           store_name: string;
           updated_at?: string;
           whatsapp?: string | null;
+          whatsapp_templates?: Json;
         };
         Update: {
           accepting_orders?: boolean;
@@ -284,9 +286,27 @@ export type Database = {
           store_name?: string;
           updated_at?: string;
           whatsapp?: string | null;
+          whatsapp_templates?: Json;
         };
         Relationships: [];
       };
+      message_logs: TableDef<
+        {
+          id: string;
+          order_id: string | null;
+          customer_id: string | null;
+          template: string;
+          channel: string;
+          sent_by: string | null;
+          sent_by_name: string | null;
+          created_at: string;
+        },
+        "template",
+        [
+          FK<"message_logs_order_id_fkey", "order_id", "orders">,
+          FK<"message_logs_customer_id_fkey", "customer_id", "customers">,
+        ]
+      >;
       couriers: TableDef<
         {
           id: string;
@@ -565,6 +585,10 @@ export type Database = {
         Returns: Json;
       };
       get_promotion_prices: { Args: never; Returns: Json };
+      log_message: {
+        Args: { p_order_id: string | null; p_customer_id: string | null; p_template: string };
+        Returns: undefined;
+      };
       get_source_stats: { Args: never; Returns: Json };
       product_effective_price: { Args: { p_product_id: string }; Returns: number };
       redeem_loyalty_reward: { Args: { p_reward_id: string }; Returns: undefined };

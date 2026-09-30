@@ -20,7 +20,14 @@ export type BoardOrder = {
   delivery: { status: DeliveryStatus; courier_name: string | null } | null;
   /** Brinde de fidelidade vinculado ao pedido (seção 13). */
   reward: OrderReward | null;
+  customer_phone: string;
+  public_token: string;
+  cancellation_reason: string | null;
+  /** Avisos de WhatsApp já abertos pelo atendente (7B). */
+  messages: MessageLog[];
 };
+
+export type MessageLog = { template: string; created_at: string; sent_by_name: string | null };
 
 export type OrderReward = {
   id: string;
@@ -68,7 +75,7 @@ export async function listBoardOrders(): Promise<BoardOrder[]> {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, order_number, status, order_type, total, payment_method, change_for, created_at, updated_at, customer_snapshot, address_snapshot, order_items(quantity), deliveries(status, couriers(name)), loyalty_rewards(id, status, reward_description, redeemed_by_name)",
+      "id, order_number, status, order_type, total, payment_method, change_for, created_at, updated_at, customer_snapshot, address_snapshot, order_items(quantity), deliveries(status, couriers(name)), loyalty_rewards(id, status, reward_description, redeemed_by_name), public_token, cancellation_reason, message_logs(template, created_at, sent_by_name)",
     )
     .or(
       `status.not.in.(delivered,picked_up,cancelled,refused),updated_at.gte.${startOfTodaySaoPaulo()}`,
@@ -97,6 +104,10 @@ export async function listBoardOrders(): Promise<BoardOrder[]> {
       ? { status: delivery.status, courier_name: one(delivery.couriers)?.name ?? null }
       : null,
     reward: one(o.loyalty_rewards as unknown as OrderReward | null),
+    customer_phone: (o.customer_snapshot as CustomerSnapshot).phone,
+    public_token: o.public_token,
+    cancellation_reason: o.cancellation_reason,
+    messages: [...(o.message_logs as MessageLog[])].sort((a, b) => b.created_at.localeCompare(a.created_at)),
     };
   });
 }
@@ -119,6 +130,7 @@ export type AdminOrderDetail = {
   public_token: string;
   coupon_code: string | null;
   reward: OrderReward | null;
+  messages: MessageLog[];
   customer: CustomerSnapshot & { id: string };
   address: AddressSnapshot | null;
   items: {
@@ -159,7 +171,8 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
        order_status_history(id, previous_status, new_status, changed_by_name, reason, created_at),
        deliveries(status, offered_at, accepted_at, picked_up_at, delivered_at, couriers(name, phone)),
        coupons(code),
-       loyalty_rewards(id, status, reward_description, redeemed_by_name)`,
+       loyalty_rewards(id, status, reward_description, redeemed_by_name),
+       message_logs(template, created_at, sent_by_name)`,
     )
     .eq("id", id)
     .maybeSingle();
@@ -204,6 +217,7 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
     public_token: data.public_token,
     coupon_code: one(data.coupons as unknown as { code: string } | null)?.code ?? null,
     reward: one(data.loyalty_rewards as unknown as OrderReward | null),
+    messages: [...(data.message_logs as MessageLog[])].sort((a, b) => b.created_at.localeCompare(a.created_at)),
     customer: { id: data.customer_id, ...(data.customer_snapshot as CustomerSnapshot) },
     address: data.address_snapshot as AddressSnapshot | null,
     items: [...items]

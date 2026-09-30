@@ -1,27 +1,18 @@
 import { BarChart3 } from "lucide-react";
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { QRCodeCard } from "@/components/marketing/qr-code-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSourceStats } from "@/lib/marketing/queries";
+import { getSiteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = { title: "QR Code" };
 
 const date = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" });
 
-/** Endereço público do site: NEXT_PUBLIC_SITE_URL ou o domínio da requisição atual. */
-async function siteUrl() {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
-}
-
 export default async function QRCodePage() {
-  const [baseUrl, stats] = await Promise.all([siteUrl(), getSourceStats()]);
+  const [baseUrl, stats] = await Promise.all([getSiteUrl(), getSourceStats()]);
   const total = stats.reduce((s, x) => s + x.orders, 0);
 
   return (

@@ -77,6 +77,8 @@ export type CustomerDetail = {
   first_order_at: string | null;
   last_order_at: string | null;
   created_at: string;
+  /** Última promoção enviada pelo WhatsApp (7B). */
+  last_promotion_at: string | null;
   addresses: {
     id: string;
     zip_code: string | null;
@@ -120,15 +122,23 @@ export type CustomerDetail = {
 
 export async function getCustomer(id: string): Promise<CustomerDetail | null> {
   const supabase = await createClient();
-  const [customerRes, addressesRes, ordersRes, rewardsRes, ruleRes] = await Promise.all([
+  const [customerRes, addressesRes, ordersRes, rewardsRes, ruleRes, promoRes] = await Promise.all([
     supabase.from("customers").select("*").eq("id", id).maybeSingle(),
     supabase.from("customer_addresses").select("*").eq("customer_id", id).order("is_default", { ascending: false }).order("created_at", { ascending: false }),
     supabase.from("orders").select("id, order_number, created_at, status, order_type, total").eq("customer_id", id).order("created_at", { ascending: false }).limit(100),
     supabase.from("loyalty_rewards").select("id, status, reward_description, created_at, redeemed_at, order_id").eq("customer_id", id).order("created_at", { ascending: false }),
     supabase.from("loyalty_rules").select("name, orders_required, reward_description").eq("active", true).maybeSingle(),
+    supabase
+      .from("message_logs")
+      .select("created_at")
+      .eq("customer_id", id)
+      .eq("template", "promotion")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
-  for (const r of [customerRes, addressesRes, ordersRes, rewardsRes, ruleRes]) {
+  for (const r of [customerRes, addressesRes, ordersRes, rewardsRes, ruleRes, promoRes]) {
     if (r.error) fail("o cliente", r.error.message);
   }
   const c = customerRes.data;
@@ -154,6 +164,7 @@ export async function getCustomer(id: string): Promise<CustomerDetail | null> {
     first_order_at: c.first_order_at,
     last_order_at: c.last_order_at,
     created_at: c.created_at,
+    last_promotion_at: promoRes.data?.created_at ?? null,
     addresses: addressesRes.data ?? [],
     orders,
     rewards: rewardsRes.data ?? [],

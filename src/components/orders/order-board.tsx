@@ -8,6 +8,7 @@ import { OrderCard } from "@/components/orders/order-card";
 import { Button } from "@/components/ui/button";
 import { useRealtimeOrders } from "@/hooks/use-realtime-orders";
 import type { BoardOrder } from "@/lib/orders/admin-queries";
+import type { MessageContext } from "@/lib/whatsapp/context";
 import { BOARD_COLUMNS } from "@/lib/orders/labels";
 import { playNewOrderSound, unlockSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
@@ -22,7 +23,7 @@ function readSoundPref() {
   }
 }
 
-export function OrderBoard({ orders }: { orders: BoardOrder[] }) {
+export function OrderBoard({ orders, messages }: { orders: BoardOrder[]; messages: MessageContext }) {
   const [now, setNow] = useState(() => Date.now());
   const [soundOn, setSoundOn] = useState(false);
   const [activeTab, setActiveTab] = useState(BOARD_COLUMNS[0].id);
@@ -129,7 +130,7 @@ export function OrderBoard({ orders }: { orders: BoardOrder[] }) {
             {column.orders.length === 0 ? (
               <p className="px-1 py-6 text-center text-sm text-muted-foreground">Nenhum pedido</p>
             ) : (
-              column.orders.map((order) => <OrderCard key={order.id} order={order} now={now} />)
+              column.orders.map((order) => <OrderCard key={order.id} order={order} now={now} messages={messages} />)
             )}
           </section>
         ))}
