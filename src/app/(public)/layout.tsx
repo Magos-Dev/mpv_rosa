@@ -28,6 +28,17 @@ export default async function PublicLayout({ children }: { children: React.React
           <Link href="/privacidade" className="underline-offset-4 hover:underline">
             Política de Privacidade
           </Link>
+          <span className="w-full text-center text-xs">
+            Desenvolvido por{" "}
+            <a
+              href="https://afweb.com.br"
+              target="_blank"
+              rel="noopener"
+              className="font-medium underline-offset-4 hover:text-foreground hover:underline"
+            >
+              AFWEB
+            </a>
+          </span>
         </div>
       </footer>
       <CartBar />
