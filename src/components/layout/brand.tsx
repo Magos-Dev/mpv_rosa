@@ -1,6 +1,8 @@
-import { UtensilsCrossed } from "lucide-react";
+import Image from "next/image";
 
 import { cn } from "@/lib/utils";
+
+import logo from "../../../public/logo.png";
 
 type BrandProps = {
   name: string;
@@ -11,13 +13,10 @@ type BrandProps = {
 export function Brand({ name, subtitle, className }: BrandProps) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <UtensilsCrossed className="size-4.5" aria-hidden />
-      </span>
-      <div className="min-w-0 leading-tight">
-        <p className="truncate font-heading text-sm font-semibold">{name}</p>
-        {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
-      </div>
+      <Image src={logo} alt={name} priority className="h-10 w-auto shrink-0" />
+      {subtitle && (
+        <p className="min-w-0 truncate border-l pl-2.5 text-xs leading-tight text-muted-foreground">{subtitle}</p>
+      )}
     </div>
   );
 }
